@@ -8,11 +8,11 @@
 #include "fractal.h"
 
 #define MAX_ITERATIONS 1000
+#define NUM_COLOURS 7
 
 /* outputs a colour given a number of iterations */
 SDL_Color colour_iters(int num_iters) {
     int red, green, blue;
-    const int NUM_COLOURS = 7;
     static float colour[NUM_COLOURS][3] = {
         {0, 0, 0}, // black
         {0.5, 0, 1}, // purple
