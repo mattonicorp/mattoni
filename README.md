@@ -1,2 +1,2 @@
-# mattoni
+# Mattoni
 Fractals for everyone
