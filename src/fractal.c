@@ -7,7 +7,7 @@
 #include "buffer.h"
 #include "fractal.h"
 
-#define MAX_ITERATIONS 1000
+#define MAX_ITERATIONS 100
 #define NUM_COLOURS 7
 
 /* outputs a colour given a number of iterations */
@@ -50,12 +50,12 @@ SDL_Color colour_iters(unsigned int num_iters) {
 /* fills a buffer representing 1/16 of the screen with colours */
 void mandelbrot(ld_complex_t top, ld_complex_t bottom, struct buffer_t *buf) {
     long double top_real = creall(top);
-    long double top_imag = creall(top);
-    long double bottom_real = cimagl(bottom);
-    long double bottom_imag = cimagl(top);
+    long double top_imag = cimagl(top);
+    long double bottom_real = creall(bottom);
+    long double bottom_imag = cimagl(bottom);
 
     long double hor_step = (bottom_real - top_real) / buf->width;
-    long double vert_step = (bottom_imag - top_imag) / buf->height;
+    long double vert_step = (top_imag - bottom_imag) / buf->height;
 
     /* fill the buffer's array with colours */
     long double real_part = top_real;
@@ -70,7 +70,7 @@ void mandelbrot(ld_complex_t top, ld_complex_t bottom, struct buffer_t *buf) {
             while (x*x + y*y <= 2*2 && iteration < MAX_ITERATIONS) {
                 long double xtemp = x*x - y*y + real_part;
                 y = 2.0*x*y + imag_part;
-                y = xtemp;
+                x = xtemp;
                 ++iteration;
             }
 

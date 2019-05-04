@@ -50,7 +50,7 @@ int main() {
     SDL_LockSurface(screen_surface);
 
     ld_complex_t top = -2.5 + 1.0I;
-    ld_complex_t bottom = 1.0 + 1.0I;
+    ld_complex_t bottom = 1.0 - 1.0I;
     struct buffer_t *buf = make_buffer(WINDOW_WIDTH, WINDOW_HEIGHT);
     mandelbrot(top, bottom, buf);
 
