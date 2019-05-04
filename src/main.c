@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <pthread.h>
 #include <SDL2/SDL.h>
 
 #include "fractal.h"
@@ -18,8 +19,9 @@ struct worker_luggage_t {
     SDL_Rect region_pixel_geometry;
 };
 
-/* This is the main screen surface, on which everything is going to be drawn */
 SDL_Surface *g_screen_surface;
+SDL_Surface *g_worker_surface;
+pthread_mutex_t g_worker_surface_lock = PTHREAD_MUTEX_INITIALIZER;
 
 /* This is a thread pool that will contain our workers. */
 void *g_pool;
@@ -53,6 +55,9 @@ int main() {
     // Set globals.
     g_screen_surface = SDL_GetWindowSurface(window);
     g_pool = pool_start(fractal_worker, HORIZONTAL_REGIONS * VERTICAL_REGIONS);
+    g_worker_surface = SDL_CreateRGBSurface(0,
+        WINDOW_WIDTH / HORIZONTAL_REGIONS, WINDOW_HEIGHT / VERTICAL_REGIONS,
+        32, 0, 0, 0, 0);
 
     // This is the initial viewport. The viewport is like a window into the complex plane. It has
     // a fixed shape but it is independant of the actual window (and window's surface) size. One
@@ -124,6 +129,7 @@ int main() {
     }
 
     exit_routine:
+    SDL_FreeSurface(g_worker_surface);
     SDL_DestroyWindow(window);
     bail_window:
     SDL_Quit;
@@ -182,22 +188,23 @@ void *fractal_worker(void *luggage_v) {
 
     ld_complex_t region_top = luggage->region_top;
     ld_complex_t region_bot = luggage->region_bot;
-    SDL_Surface *worker_surface = SDL_CreateRGBSurface(0, pw, ph, 32, 0, 0, 0, 0);
 
+    // This is the long computation part.
     struct buffer_t *buf = make_buffer(pw, ph);
     julia(region_top, region_bot, 2, buf);
+
+    // Lock the global worker surface before copying the buffer on it because it is shared by all the threads.
+    pthread_mutex_lock(&g_worker_surface_lock);
     for (int x = 0; x < pw; x++) {
         for (int y = 0; y < ph; y++) {
             SDL_Color col = buf->colors[x + y * pw];
-            set_pixel(worker_surface, x, y, SDL_MapRGB(worker_surface->format, col.r, col.g, col.b));
+            set_pixel(g_worker_surface, x, y, SDL_MapRGB(g_worker_surface->format, col.r, col.g, col.b));
         }
     }
+    SDL_BlitSurface(g_worker_surface, NULL, g_screen_surface, &luggage->region_pixel_geometry);
+    pthread_mutex_unlock(&g_worker_surface_lock);
 
-    SDL_BlitSurface(worker_surface, NULL, g_screen_surface, &luggage->region_pixel_geometry);
-
-    // The memory leak-free corner of this code :^)
     free(buf);
-    // SDL_FreeSurface(worker_surface);
     return NULL;
 }
 
