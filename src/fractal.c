@@ -60,56 +60,71 @@ SDL_Color lerp(SDL_Color c1, SDL_Color c2, float t) {
     return new_colour;
 }
 
-/* fills a buffer representing 1/16 of the screen with colours */
-void mandelbrot(ld_complex_t top, ld_complex_t bottom, struct buffer_t *buf) {
-    long double top_real = creall(top);
-    long double top_imag = cimagl(top);
-    long double bottom_real = creall(bottom);
-    long double bottom_imag = cimagl(bottom);
+SDL_Color get_color(ld_complex_t z, unsigned int iteration) {
 
-    long double hor_step = (bottom_real - top_real) / buf->width;
-    long double vert_step = (bottom_imag - top_imag) / buf->height;
+    long double x = creall(z);
+    long double y = cimagl(z);
 
-    /* fill the buffer's array with colours */
-    long double real_part = top_real;
-    long double imag_part = 0.0;
-    for (unsigned int i=0; i<buf->width; ++i) {
-        long double imag_part = top_imag;
-        for (unsigned int j=0; j<buf->height; ++j) {
-            long double x = 0.0;
-            long double y = 0.0;
+    long double nu;
+    float flt_iter;
+    if (iteration < MAX_ITERATIONS) {
+        long double log_zn = log(x*x + y*y) / 2;
+        nu = log (log_zn / log(2)) / log(2);
+        flt_iter = iteration + 1.0 - nu;
+    } else {
+        flt_iter = MAX_ITERATIONS - 1;
+    }
+
+    SDL_Color col1 = colour_iters((unsigned int) flt_iter);
+    SDL_Color col2 = colour_iters((unsigned int) flt_iter + 1);
+    float fract = fmod(flt_iter, 1);
+
+    return lerp(col1, col2, fract);
+}
+
+void julia(ld_complex_t top, ld_complex_t bottom, unsigned int seed, struct buffer_t *buf) {
+
+    ld_complex_t c = CMPLXL(-0.8, 0.156);
+
+    long double step_w = (creall(bottom) - creall(top)) / buf->width;
+    long double step_h = (cimagl(bottom) - cimagl(top)) / buf->height;
+    for (unsigned int i = 0; i < buf->width; i++) {
+        for (unsigned int j = 0; j < buf->height; j++) {
+
             unsigned int iteration = 0;
 
-            while (x*x + y*y <= (1 << 16) && iteration < MAX_ITERATIONS) {
-                long double xtemp = x*x - y*y + real_part;
-                y = 2.0*x*y + imag_part;
-                x = xtemp;
-                ++iteration;
+            ld_complex_t z = top + CMPLXL(i * step_w, j * step_h);
+            while (cabsl(z) <= 2.0 && iteration < MAX_ITERATIONS) {
+                z = z*z + c;
+                iteration++;
             }
 
-            long double nu;
-            float flt_iter;
-
-            if (iteration < MAX_ITERATIONS) {
-                long double log_zn = log(x*x + y*y) / 2;
-                nu = log (log_zn / log(2)) / log(2);
-                flt_iter = iteration + 1.0 - nu;
-            } else {
-                flt_iter = MAX_ITERATIONS - 1;
-            }
-
-            SDL_Color col1 = colour_iters((unsigned int) flt_iter);
-            SDL_Color col2 = colour_iters((unsigned int) flt_iter + 1);
-            float fract = fmod(flt_iter, 1);
-
-            // printf("%LG %LG, %u\n", real_part, imag_part, iteration);
-
-            SDL_Color col = lerp(col1, col2, fract);
-
-            set_color(buf, i, j, col);
-
-            imag_part += vert_step;
+            set_color(buf, i, j, get_color(z, iteration));
         }
-        real_part += hor_step;
+    }
+}
+
+void mandelbrot(ld_complex_t top, ld_complex_t bottom, unsigned int seed, struct buffer_t *buf) {
+
+    long double step_w = (creall(bottom) - creall(top)) / buf->width;
+    long double step_h = (cimagl(bottom) - cimagl(top)) / buf->height;
+    for (unsigned int i=0; i<buf->width; ++i) {
+        for (unsigned int j=0; j<buf->height; ++j) {
+
+            unsigned int iteration = 0;
+
+            ld_complex_t z = CMPLXL(0.0, 0.0);
+            ld_complex_t c = top + CMPLXL(i * step_w, j * step_h);
+            while (cabsl(z) <= 2.0 && iteration < MAX_ITERATIONS) {
+                ld_complex_t old_z = z;
+                for (int p = 0; p < seed - 1; p++) {
+                    old_z *= z;
+                }
+                z = old_z + c;
+                iteration++;
+            }
+
+            set_color(buf, i, j, get_color(z, iteration));
+        }
     }
 }

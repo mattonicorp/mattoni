@@ -24,7 +24,7 @@ SDL_Surface *g_screen_surface;
 /* This is a thread pool that will contain our workers. */
 void *g_pool;
 
-void draw(ld_complex_t viewport_top, ld_complex_t viewport_bot);
+void draw_fractal(ld_complex_t viewport_top, ld_complex_t viewport_bot);
 void *fractal_worker(void *luggage_v);
 void change_viewport(int down_x, int down_y, int up_x, int up_y,
                      ld_complex_t *viewport_top, ld_complex_t *viewport_bottom);
@@ -38,7 +38,7 @@ int main() {
     }
 
     SDL_Window *window;
-    window = SDL_CreateWindow("Mattoni: Free Fractals for Everyone lol",
+    window = SDL_CreateWindow("Mattoni: Free Fractals for the People",
         SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
         WINDOW_WIDTH, WINDOW_HEIGHT,
         SDL_WINDOW_SHOWN | SDL_WINDOW_ALLOW_HIGHDPI
@@ -64,8 +64,8 @@ int main() {
     int down_x, down_y;
     int up_x, up_y;
     int curr_x, curr_y;
-    int dirty = 1;
     int mouse_down = 0;
+    static int dirty = 1;
     while (1) {
         // SDL_GetMouseState(&curr_x, &curr_y);
         // printf("Curr pos: %d %d\n", curr_x, curr_y);
@@ -74,8 +74,9 @@ int main() {
             /* Ooh, she be dirty */
             dirty = 0;
             printf("Redrawing fractal\n");
-            draw(viewport_top, viewport_bot);
+            draw_fractal(viewport_top, viewport_bot);
         }
+
         SDL_UpdateWindowSurface(window);
 
         if (SDL_PollEvent(&event)) {
@@ -106,7 +107,7 @@ int main() {
     return EXIT_SUCCESS;
 }
 
-void draw(ld_complex_t viewport_top, ld_complex_t viewport_bot) {
+void draw_fractal(ld_complex_t viewport_top, ld_complex_t viewport_bot) {
 
     // Each region of the screen has a size as measured in the complex plane and a size in pixels.
     // Both are needed but they are unrelated to each other, despite the very similar names.
@@ -161,7 +162,7 @@ void *fractal_worker(void *luggage_v) {
     SDL_Surface *worker_surface = SDL_CreateRGBSurface(0, pw, ph, 32, 0, 0, 0, 0);
 
     struct buffer_t *buf = make_buffer(pw, ph);
-    mandelbrot(region_top, region_bot, buf);
+    mandelbrot(region_top, region_bot, 2, buf);
     for (int x = 0; x < pw; x++) {
         for (int y = 0; y < ph; y++) {
             SDL_Color col = buf->colors[x + y * pw];
