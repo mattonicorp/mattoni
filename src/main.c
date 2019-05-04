@@ -14,7 +14,7 @@ void fractal_worker(ld_complex_t region_top, ld_complex_t region_bot);
 
 // TODO: put that in another file or something
 void set_pixel(SDL_Surface *surface, int x, int y, Uint32 value) {
-    
+
     if (x >= surface->w || y >= surface->h) {
         printf("Error: trying to set pixel outside of surface bounds!\n");
         return;
@@ -26,7 +26,7 @@ void set_pixel(SDL_Surface *surface, int x, int y, Uint32 value) {
 
 int main() {
 
-    if (SDL_Init(SDL_INIT_VIDEO) < 0) {
+    if (SDL_Init(SDL_INIT_EVERYTHING) < 0) {
         printf("Error initializing SDL: %s\n", SDL_GetError());
         exit(EXIT_FAILURE);
     }
@@ -35,7 +35,7 @@ int main() {
     window = SDL_CreateWindow("Mattoni: Free Fractals for Everyone lol",
         SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
         WINDOW_WIDTH, WINDOW_HEIGHT,
-        SDL_WINDOW_SHOWN
+        SDL_WINDOW_SHOWN | SDL_WINDOW_ALLOW_HIGHDPI
     );
 
     if (window == NULL) {
@@ -48,20 +48,23 @@ int main() {
     SDL_FillRect(screen_surface, NULL, SDL_MapRGB(screen_surface->format, 0, 0, 0)); // TODO: remove this. this only fill the surface with black but once we get the workers going it wont be needed.
 
     SDL_LockSurface(screen_surface);
-
     ld_complex_t top = -2.5 + 1.0I;
     ld_complex_t bottom = 1.0 - 1.0I;
     struct buffer_t *buf = make_buffer(WINDOW_WIDTH, WINDOW_HEIGHT);
     mandelbrot(top, bottom, buf);
-
     SDL_Color col;
+
     for (int i=0; i<WINDOW_WIDTH; ++i) {
         for (int j=0; j<WINDOW_HEIGHT; ++j) {
             col = buf->colors[i + j*buf->width];
+            // printf("%d %d %d\n", col.r, col.g, col.b);
             set_pixel(screen_surface, i, j, SDL_MapRGB(screen_surface->format, col.r, col.g, col.b));
         }
     }
+
     SDL_UnlockSurface(screen_surface);
+
+    SDL_UpdateWindowSurface(window);
 
     ld_complex_t viewport_top = CMPLXL(-2.0, 2.0);
     ld_complex_t viewport_bot = CMPLXL(2.0, -2.0);

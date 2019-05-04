@@ -8,19 +8,19 @@
 #include "fractal.h"
 
 #define MAX_ITERATIONS 100
-#define NUM_COLOURS 7
+#define NUM_COLOURS 13
 
 /* outputs a colour given a number of iterations */
 SDL_Color colour_iters(unsigned int num_iters) {
     int red, green, blue;
     static float colour[NUM_COLOURS][3] = {
-        {0, 0, 0}, // black
-        {0.5, 0, 1}, // purple
-        {0, 0, 1}, // blue
-        {0, 1, 1}, // cyan
-        {0, 1, 0}, // green
+        {1, 0.5, 0}, // orange
         {1, 1, 0}, // yellow
-        {1, 0, 0}, // red
+        {0, 1, 0}, // green
+        {0, 1, 1}, // cyan
+        {0, 0, 1}, // blue
+        {0.5, 0, 1}, // purple
+        {0, 0, 0}, // black
     };
 
     int idx1, idx2;
@@ -55,7 +55,7 @@ void mandelbrot(ld_complex_t top, ld_complex_t bottom, struct buffer_t *buf) {
     long double bottom_imag = cimagl(bottom);
 
     long double hor_step = (bottom_real - top_real) / buf->width;
-    long double vert_step = (top_imag - bottom_imag) / buf->height;
+    long double vert_step = (bottom_imag - top_imag) / buf->height;
 
     /* fill the buffer's array with colours */
     long double real_part = top_real;
@@ -73,6 +73,8 @@ void mandelbrot(ld_complex_t top, ld_complex_t bottom, struct buffer_t *buf) {
                 x = xtemp;
                 ++iteration;
             }
+
+            // printf("%LG %LG, %u\n", real_part, imag_part, iteration);
 
             SDL_Color col = colour_iters(iteration);
 
