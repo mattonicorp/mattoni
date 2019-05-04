@@ -24,7 +24,7 @@ SDL_Surface *g_screen_surface;
 /* This is a thread pool that will contain our workers. */
 void *g_pool;
 
-void draw(ld_complex_t viewport_top, ld_complex_t viewport_bot);
+void draw_fractal(ld_complex_t viewport_top, ld_complex_t viewport_bot);
 void *fractal_worker(void *luggage_v);
 
 int main() {
@@ -36,7 +36,7 @@ int main() {
     }
 
     SDL_Window *window;
-    window = SDL_CreateWindow("Mattoni: Free Fractals for Everyone lol",
+    window = SDL_CreateWindow("Mattoni: Free Fractals for the People",
         SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
         WINDOW_WIDTH, WINDOW_HEIGHT,
         SDL_WINDOW_SHOWN | SDL_WINDOW_ALLOW_HIGHDPI
@@ -59,14 +59,15 @@ int main() {
     ld_complex_t viewport_bot = CMPLXL(1.0, -1.0);
 
     SDL_Event event;
-    int dirty = 1;
+    static int dirty = 1;
     while (1) {
 
         if (dirty) {
             dirty = 0;
             printf("Redrawing fractal\n");
-            draw(viewport_top, viewport_bot);
+            draw_fractal(viewport_top, viewport_bot);
         }
+
         SDL_UpdateWindowSurface(window);
 
         if (SDL_PollEvent(&event) && event.type == SDL_QUIT) {
@@ -81,7 +82,7 @@ int main() {
     return EXIT_SUCCESS;
 }
 
-void draw(ld_complex_t viewport_top, ld_complex_t viewport_bot) {
+void draw_fractal(ld_complex_t viewport_top, ld_complex_t viewport_bot) {
 
     // Each region of the screen has a size as measured in the complex plane and a size in pixels.
     // Both are needed but they are unrelated to each other, despite the very similar names.
