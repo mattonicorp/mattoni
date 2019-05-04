@@ -60,8 +60,53 @@ SDL_Color lerp(SDL_Color c1, SDL_Color c2, float t) {
     return new_colour;
 }
 
+SDL_Color get_color(ld_complex_t z, unsigned int iteration) {
+
+    long double x = creall(z);
+    long double y = cimagl(z);
+
+    long double nu;
+    float flt_iter;
+    if (iteration < MAX_ITERATIONS) {
+        long double log_zn = log(x*x + y*y) / 2;
+        nu = log (log_zn / log(2)) / log(2);
+        flt_iter = iteration + 1.0 - nu;
+    } else {
+        flt_iter = MAX_ITERATIONS - 1;
+    }
+
+    SDL_Color col1 = colour_iters((unsigned int) flt_iter);
+    SDL_Color col2 = colour_iters((unsigned int) flt_iter + 1);
+    float fract = fmod(flt_iter, 1);
+
+    return lerp(col1, col2, fract);
+}
+
+void julia(ld_complex_t top, ld_complex_t bottom, struct buffer_t *buf) {
+
+    ld_complex_t c = CMPLXL(-0.8, 0.2);
+
+    long double step_w = (creall(bottom) - creall(top)) / buf->width;
+    long double step_h = (cimagl(bottom) - cimagl(top)) / buf->height;
+    for (unsigned int i = 0; i < buf->width; i++) {
+        for (unsigned int j = 0; j < buf->height; j++) {
+
+            unsigned int iteration = 0;
+
+            ld_complex_t z = top + CMPLXL(i * step_w, j * step_h);
+            while (cabsl(z) <= 2.0 && iteration < MAX_ITERATIONS) {
+                z = z*z + c;
+                iteration++;
+            }
+
+            set_color(buf, i, j, get_color(z, iteration));
+        }
+    }
+}
+
 /* fills a buffer representing 1/16 of the screen with colours */
 void mandelbrot(ld_complex_t top, ld_complex_t bottom, struct buffer_t *buf) {
+
     long double top_real = creall(top);
     long double top_imag = cimagl(top);
     long double bottom_real = creall(bottom);
@@ -87,26 +132,7 @@ void mandelbrot(ld_complex_t top, ld_complex_t bottom, struct buffer_t *buf) {
                 ++iteration;
             }
 
-            long double nu;
-            float flt_iter;
-
-            if (iteration < MAX_ITERATIONS) {
-                long double log_zn = log(x*x + y*y) / 2;
-                nu = log (log_zn / log(2)) / log(2);
-                flt_iter = iteration + 1.0 - nu;
-            } else {
-                flt_iter = MAX_ITERATIONS - 1;
-            }
-
-            SDL_Color col1 = colour_iters((unsigned int) flt_iter);
-            SDL_Color col2 = colour_iters((unsigned int) flt_iter + 1);
-            float fract = fmod(flt_iter, 1);
-
-            // printf("%LG %LG, %u\n", real_part, imag_part, iteration);
-
-            SDL_Color col = lerp(col1, col2, fract);
-
-            set_color(buf, i, j, col);
+            set_color(buf, i, j, get_color(CMPLXL(x, y), iteration));
 
             imag_part += vert_step;
         }
