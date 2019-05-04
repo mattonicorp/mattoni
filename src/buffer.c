@@ -1,7 +1,6 @@
 #include <stdlib.h>
 
 #include "buffer.h"
-#include "rgb.h"
 
 struct buffer_t {
     SDL_Color *colors;
@@ -11,15 +10,15 @@ struct buffer_t {
 
 struct buffer_t *make_buffer(size_t screen_w, size_t screen_h) {
     
-    struct buffer_t *buf = (struct buffer *)malloc(sizeof(struct buffer_t));
+    struct buffer_t *buf = (struct buffer_t *)malloc(sizeof(struct buffer_t));
     buf->width = screen_w;
     buf->height = screen_h;
-    buf->colors = malloc(sizeof(SDL_Color) * screen_w * screen_h);
+    buf->colors = (SDL_Color *)malloc(sizeof(SDL_Color) * screen_w * screen_h);
 
     return buf;
 }
 
-void free_buffer(**buf) {
+void free_buffer(struct buffer_t **buf) {
     free((*buf)->colors);
     free(*buf);
     *buf = NULL;
