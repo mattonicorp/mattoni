@@ -13,14 +13,14 @@
 SDL_Color colour_iters(int num_iters) {
     int red, green, blue;
     const int NUM_COLOURS = 7;
-    static int colour[NUM_COLOURS][3] = {
-        {0, 0, 0},       // black
-        {0, 0, 255},     // blue
-        {0, 255, 255},   // cyan
-        {0, 255, 0},     // green
-        {255, 255, 0},   // yellow
-        {255, 0, 0},     // red
-        {255, 255, 255}, // white
+    static float colour[NUM_COLOURS][3] = {
+        {0, 0, 0}, // black
+        {0.5, 0, 1}, // purple
+        {0, 0, 1}, // blue
+        {0, 1, 1}, // cyan
+        {0, 1, 0}, // green
+        {1, 1, 0}, // yellow
+        {1, 0, 0}, // red
     };
 
     int idx1, idx2;
@@ -38,9 +38,9 @@ SDL_Color colour_iters(int num_iters) {
         fract_between = value - (float) idx1;
     }
 
-    red = (int) ((colour[idx2][0] - colour[idx1][0]) * fract_between + colour[idx1][0] * 255);
-    green = (int) ((colour[idx2][1] - colour[idx1][0]) * fract_between + colour[idx1][1] * 255);
-    blue = (int) ((colour[idx2][2] - colour[idx1][0]) * fract_between + colour[idx1][2] * 255);
+    red = (int) (((colour[idx2][0] - colour[idx1][0]) * fract_between + colour[idx1][0]) * 255);
+    green = (int) (((colour[idx2][1] - colour[idx1][1]) * fract_between + colour[idx1][1]) * 255);
+    blue = (int) (((colour[idx2][2] - colour[idx1][2]) * fract_between + colour[idx1][2]) * 255);
 
     SDL_Color ret_val = {red, green, blue};
     return ret_val;
