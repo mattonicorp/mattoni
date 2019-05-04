@@ -93,7 +93,6 @@ void mandelbrot(ld_complex_t top, ld_complex_t bottom, struct buffer_t *buf) {
             if (iteration < MAX_ITERATIONS) {
                 long double log_zn = log(x*x + y*y) / 2;
                 nu = log (log_zn / log(2)) / log(2);
-                printf("%LG\n", nu);
                 flt_iter = iteration + 1.0 - nu;
             } else {
                 flt_iter = MAX_ITERATIONS - 1;

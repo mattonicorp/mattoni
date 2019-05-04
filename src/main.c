@@ -126,17 +126,18 @@ void *fractal_worker(void *luggage_v) {
     int pw = luggage->region_pixel_geometry.w;
     int ph = luggage->region_pixel_geometry.h;
 
-    ld_complex_t viewport_top = luggage->viewport_top;
-    ld_complex_t viewport_bot = luggage->viewport_bot;
+    ld_complex_t region_top = luggage->region_top;
+    ld_complex_t region_bot = luggage->region_bot;
 
     struct buffer_t *buf = make_buffer(pw, ph);
-    mandelbrot(viewport_top, viewport_bot, buf);
+    mandelbrot(region_top, region_bot, buf);
 
-    // This surface will receive the computed colors for the fractal and we will blit it onto the
-    // shared global surface.
     SDL_Surface *worker_surface = SDL_CreateRGBSurface(0, pw, ph, 32, 0, 0, 0, 0);
     SDL_FillRect(worker_surface, NULL, SDL_MapRGB(worker_surface->format, 0, 255, 0));
     SDL_BlitSurface(worker_surface, NULL, g_screen_surface, &luggage->region_pixel_geometry);
+
+    SDL_FreeSurface(worker_surface);
+    free(buf);
 
     return NULL;
 }
