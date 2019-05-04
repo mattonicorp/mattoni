@@ -1,8 +1,8 @@
 #include <stdlib.h>
 #include <SDL2/SDL.h>
 
-#define WINDOW_WIDTH 1200
-#define WINDOW_HEIGHT 800
+#define WINDOW_WIDTH 1300
+#define WINDOW_HEIGHT 700
 
 int main() {
     SDL_Event event;
