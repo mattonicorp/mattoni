@@ -9,7 +9,7 @@ INCS=${wildcard ${INCDIR}/*.h}
 OBJS=${patsubst ${SRCDIR}/%.c,${OBJDIR}/%.o,${SRCS}}
 
 EXEC=main
-TRASH=${OBJDIR} ${EXEC}
+TRASH=${OBJDIR} ${EXEC} main.dSYM
 
 CFLAGS=-I${INCDIR} -lm -lpthread -g
 
