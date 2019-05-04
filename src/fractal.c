@@ -8,7 +8,7 @@
 #include "buffer.h"
 #include "fractal.h"
 
-#define MAX_ITERATIONS 100
+#define MAX_ITERATIONS 1000
 #define NUM_COLOURS 8
 
 /* outputs a colour given a number of iterations */

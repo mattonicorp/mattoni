@@ -8,8 +8,8 @@
 #define WINDOW_WIDTH 1000
 #define WINDOW_HEIGHT 600
 
-#define HORIZONTAL_REGIONS 8
-#define VERTICAL_REGIONS 8
+#define HORIZONTAL_REGIONS 16
+#define VERTICAL_REGIONS 16
 
 /* Contains data to send to fractal workers. */
 struct worker_luggage_t {
@@ -28,6 +28,7 @@ void draw_fractal(ld_complex_t viewport_top, ld_complex_t viewport_bot);
 void *fractal_worker(void *luggage_v);
 void change_viewport(int down_x, int down_y, int up_x, int up_y,
                      ld_complex_t *viewport_top, ld_complex_t *viewport_bottom);
+void change_centre(int centre_x, int centre_y, ld_complex_t *viewport_top, ld_complex_t *viewport_bottom);
 
 int main() {
 
@@ -95,6 +96,29 @@ int main() {
                     printf("Viewport bottom: %LG %LG\n", creall(viewport_bot), cimagl(viewport_bot));
                     dirty = 1;
                     break;
+                case SDL_KEYDOWN:
+                    switch (event.key.keysym.sym) {
+                        /* move by sending specially chosen boundaries to change_viewport */
+                        case SDLK_LEFT:
+                            change_centre(0, WINDOW_HEIGHT/2, &viewport_top, &viewport_bot);
+                            goto set_dirty;
+                        case SDLK_RIGHT:
+                            change_centre(WINDOW_WIDTH, WINDOW_HEIGHT/2, &viewport_top, &viewport_bot);
+                            goto set_dirty;
+                        case SDLK_UP:
+                            change_centre(WINDOW_WIDTH/2, 0, &viewport_top, &viewport_bot);
+                            goto set_dirty;
+                        case SDLK_DOWN:
+                            change_centre(WINDOW_WIDTH/2, WINDOW_HEIGHT, &viewport_top, &viewport_bot);
+                            goto set_dirty;
+                        default:
+                            break;
+                        set_dirty:
+                            dirty = 1;
+
+                    }
+                    break;
+
             }
         }
     }
@@ -158,11 +182,10 @@ void *fractal_worker(void *luggage_v) {
 
     ld_complex_t region_top = luggage->region_top;
     ld_complex_t region_bot = luggage->region_bot;
-
     SDL_Surface *worker_surface = SDL_CreateRGBSurface(0, pw, ph, 32, 0, 0, 0, 0);
 
     struct buffer_t *buf = make_buffer(pw, ph);
-    mandelbrot(region_top, region_bot, 2, buf);
+    julia(region_top, region_bot, 2, buf);
     for (int x = 0; x < pw; x++) {
         for (int y = 0; y < ph; y++) {
             SDL_Color col = buf->colors[x + y * pw];
@@ -174,8 +197,7 @@ void *fractal_worker(void *luggage_v) {
 
     // The memory leak-free corner of this code :^)
     free(buf);
-    SDL_FreeSurface(worker_surface);
-
+    // SDL_FreeSurface(worker_surface);
     return NULL;
 }
 
@@ -190,6 +212,7 @@ void change_viewport(int down_x, int down_y, int up_x, int up_y,
     int centre_y = (top_y + bottom_y) / 2;
 
     float factor = (float) (bottom_x - top_x) / WINDOW_HEIGHT;
+    factor = (factor < 0.06) ? 0.06 : factor;
 
     long double real_width = (creall(*viewport_bottom) - creall(*viewport_top));
     long double imag_height = (cimagl(*viewport_bottom) - cimagl(*viewport_top));
@@ -208,6 +231,28 @@ void change_viewport(int down_x, int down_y, int up_x, int up_y,
     long double new_top_imag = new_centre_imag - factor*imag_height/2;
     long double new_bottom_real = new_centre_real + factor*real_width/2;
     long double new_bottom_imag = new_centre_imag + factor*imag_height/2;
+
+    *viewport_top = CMPLXL(new_top_real, new_top_imag);
+    *viewport_bottom = CMPLXL(new_bottom_real, new_bottom_imag);
+}
+
+void change_centre(int centre_x, int centre_y, ld_complex_t *viewport_top, ld_complex_t *viewport_bottom) {
+    /* copy-paste from above ... I'm not proud */
+    long double real_width = (creall(*viewport_bottom) - creall(*viewport_top));
+    long double imag_height = (cimagl(*viewport_bottom) - cimagl(*viewport_top));
+
+    long double real_offset = ((long double) centre_x / WINDOW_WIDTH)*real_width;
+    long double imag_offset = ((long double) centre_y / WINDOW_HEIGHT)*imag_height;
+
+    long double new_centre_real = real_offset + creall(*viewport_top);
+    long double new_centre_imag = imag_offset + cimagl(*viewport_top);
+
+    printf("Centre: %LG %LG\n", new_centre_real, new_centre_imag);
+
+    long double new_top_real = new_centre_real - real_width/2;
+    long double new_top_imag = new_centre_imag - imag_height/2;
+    long double new_bottom_real = new_centre_real + real_width/2;
+    long double new_bottom_imag = new_centre_imag + imag_height/2;
 
     *viewport_top = CMPLXL(new_top_real, new_top_imag);
     *viewport_bottom = CMPLXL(new_bottom_real, new_bottom_imag);
