@@ -26,7 +26,7 @@ int main() {
     for (int i=0; i<WINDOW_WIDTH; ++i) {
         SDL_RenderDrawPoint(renderer, i, 300 + WINDOW_HEIGHT);
     }
-    SDL_RenderPresent(renderer);
+//    SDL_RenderPresent(renderer);
 
 
     while (1) {
