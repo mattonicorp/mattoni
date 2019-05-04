@@ -4,7 +4,11 @@
 #include <stdlib.h>
 #include <SDL2/SDL.h>
 
-struct buffer_t;
+struct buffer_t {
+    SDL_Color *colors;
+    size_t width;
+    size_t height;
+};
 
 struct buffer_t *make_buffer(size_t screen_w, size_t screen_h);
 void free_buffer(struct buffer_t **buf);
