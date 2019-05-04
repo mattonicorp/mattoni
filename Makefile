@@ -11,7 +11,7 @@ OBJS=${patsubst ${SRCDIR}/%.c,${OBJDIR}/%.o,${SRCS}}
 EXEC=main
 TRASH=${OBJDIR} ${EXEC}
 
-CFLAGS=-I${INCDIR} -lm -lpthread
+CFLAGS=-I${INCDIR} -lm -lpthread -g
 
 # Get SDL flags depending on OS
 SDLFLAGS=$(shell sdl2-config --cflags)

@@ -35,7 +35,7 @@ int main() {
     window = SDL_CreateWindow("Mattoni: Free Fractals for Everyone lol",
         SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
         WINDOW_WIDTH, WINDOW_HEIGHT,
-        SDL_WINDOW_SHOWN
+        SDL_WINDOW_SHOWN | SDL_WINDOW_ALLOW_HIGHDPI
     );
 
     if (window == NULL) {
