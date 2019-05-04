@@ -26,6 +26,8 @@ void *g_pool;
 
 void draw(ld_complex_t viewport_top, ld_complex_t viewport_bot);
 void *fractal_worker(void *luggage_v);
+void change_viewport(int down_x, int down_y, int up_x, int up_y,
+                     ld_complex_t *viewport_top, ld_complex_t *viewport_bottom);
 
 int main() {
 
@@ -59,10 +61,17 @@ int main() {
     ld_complex_t viewport_bot = CMPLXL(1.0, -1.0);
 
     SDL_Event event;
+    int down_x, down_y;
+    int up_x, up_y;
+    int curr_x, curr_y;
     int dirty = 1;
+    int mouse_down = 0;
     while (1) {
+        // SDL_GetMouseState(&curr_x, &curr_y);
+        // printf("Curr pos: %d %d\n", curr_x, curr_y);
 
         if (dirty) {
+            /* Ooh, she be dirty */
             dirty = 0;
             printf("Redrawing fractal\n");
             draw(viewport_top, viewport_bot);
@@ -73,6 +82,18 @@ int main() {
             switch (event.type) {
                 case SDL_QUIT:
                     goto exit_routine;
+                case SDL_MOUSEBUTTONDOWN:
+                    SDL_GetMouseState(&down_x, &down_y);
+                    break;
+                case SDL_MOUSEBUTTONUP:
+                    SDL_GetMouseState(&up_x, &up_y);
+                    printf("Mouse down: %d %d\n", down_x, down_y);
+                    printf("Mouse up: %d %d\n", up_x, up_y);
+                    change_viewport(down_x, down_y, up_x, up_y, &viewport_top, &viewport_bot);
+                    printf("Viewport top: %LG %LG\n", creall(viewport_top), cimagl(viewport_top));
+                    printf("Viewport bottom: %LG %LG\n", creall(viewport_bot), cimagl(viewport_bot));
+                    dirty = 1;
+                    break;
             }
         }
     }
@@ -155,5 +176,39 @@ void *fractal_worker(void *luggage_v) {
     SDL_FreeSurface(worker_surface);
 
     return NULL;
+}
+
+void change_viewport(int down_x, int down_y, int up_x, int up_y,
+                     ld_complex_t *viewport_top, ld_complex_t *viewport_bottom) {
+    int top_x = (down_x < up_x) ? down_x : up_x;
+    int top_y = (down_y < up_y) ? down_y : up_y;
+    int bottom_x = (down_x < up_x) ? up_x : down_x;
+    int bottom_y = (down_y < up_y) ? up_y : down_y;
+
+    int centre_x = (top_x + bottom_x) / 2;
+    int centre_y = (top_y + bottom_y) / 2;
+
+    float factor = (float) (bottom_x - top_x) / WINDOW_HEIGHT;
+
+    long double real_width = (creall(*viewport_bottom) - creall(*viewport_top));
+    long double imag_height = (cimagl(*viewport_bottom) - cimagl(*viewport_top));
+
+    printf("New width: %LG. New height: %LG.\n", real_width, imag_height);
+
+    long double real_offset = ((long double) centre_x / WINDOW_WIDTH)*real_width;
+    long double imag_offset = ((long double) centre_y / WINDOW_HEIGHT)*imag_height;
+
+    long double new_centre_real = real_offset + creall(*viewport_top);
+    long double new_centre_imag = imag_offset + cimagl(*viewport_top);
+
+    printf("Centre: %LG %LG\n", new_centre_real, new_centre_imag);
+
+    long double new_top_real = new_centre_real - factor*real_width/2;
+    long double new_top_imag = new_centre_imag - factor*imag_height/2;
+    long double new_bottom_real = new_centre_real + factor*real_width/2;
+    long double new_bottom_imag = new_centre_imag + factor*imag_height/2;
+
+    *viewport_top = CMPLXL(new_top_real, new_top_imag);
+    *viewport_bottom = CMPLXL(new_bottom_real, new_bottom_imag);
 }
 
