@@ -11,7 +11,7 @@
 #define NUM_COLOURS 7
 
 /* outputs a colour given a number of iterations */
-SDL_Color colour_iters(int num_iters) {
+SDL_Color colour_iters(unsigned int num_iters) {
     int red, green, blue;
     static float colour[NUM_COLOURS][3] = {
         {0, 0, 0}, // black
@@ -32,6 +32,7 @@ SDL_Color colour_iters(int num_iters) {
     } else if (value >= 1) {
         idx1 = idx2 = NUM_COLOURS-1;
     } else {
+        /* this is the most likely case */
         value = value * (NUM_COLOURS - 1);
         idx1 = floor(value);
         idx2 = idx1 + 1;
@@ -57,8 +58,28 @@ void mandelbrot(ld_complex_t top, ld_complex_t bottom, struct buffer_t *buf) {
     long double vert_step = (bottom_imag - top_imag) / buf->height;
 
     /* fill the buffer's array with colours */
-    for (int i=0; i<buf->width; ++i) {
-        for (int j=0; j<buf->height; ++j) {
+    long double real_part = top_real;
+    long double imag_part = 0.0;
+    for (unsigned int i=0; i<buf->width; ++i) {
+        long double imag_part = top_imag;
+        for (unsigned int j=0; j<buf->height; ++j) {
+            long double x = 0.0;
+            long double y = 0.0;
+            unsigned int iteration = 0;
+
+            while (x*x + y*y <= 2*2 && iteration < MAX_ITERATIONS) {
+                long double xtemp = x*x - y*y + real_part;
+                y = 2.0*x*y + imag_part;
+                y = xtemp;
+                ++iteration;
+            }
+
+            SDL_Color col = colour_iters(iteration);
+
+            set_color(buf, i, j, col);
+
+            imag_part += vert_step;
         }
+        real_part += hor_step;
     }
 }
