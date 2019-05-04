@@ -1,8 +1,9 @@
 #include <stdlib.h>
-#include <pthread.h>
 #include <SDL2/SDL.h>
 
 #include "fractal.h"
+#include "pixel_ops.h"
+#include "pthread_pool.h"
 
 #define WINDOW_WIDTH 1000
 #define WINDOW_HEIGHT 600
@@ -10,22 +11,21 @@
 #define HORIZONTAL_REGIONS 4
 #define VERTICAL_REGIONS 4
 
-void fractal_worker(ld_complex_t region_top, ld_complex_t region_bot);
+/* This is the main screen surface, on which everything is going to be drawn */
+SDL_Surface *g_screen_surface;
 
-// TODO: put that in another file or something
-void set_pixel(SDL_Surface *surface, int x, int y, Uint32 value) {
-    
-    if (x >= surface->w || y >= surface->h) {
-        printf("Error: trying to set pixel outside of surface bounds!\n");
-        return;
-    }
+struct worker_luggage_t {
+    ld_complex_t region_top;
+    ld_complex_t region_bot;
+    SDL_Rect region_pixel_geometry;
+    int wew;
+};
 
-    Uint32 *p = (Uint32 *)surface->pixels + y * surface->w + x;
-    *p = value;
-}
+void *fractal_worker(void *luggage_v);
 
 int main() {
 
+    // Init SDL and stuff.
     if (SDL_Init(SDL_INIT_VIDEO) < 0) {
         printf("Error initializing SDL: %s\n", SDL_GetError());
         exit(EXIT_FAILURE);
@@ -43,28 +43,13 @@ int main() {
         goto bail_window;
     }
 
-    SDL_Surface *screen_surface; // The main surface on which everything is drawn.
-    screen_surface = SDL_GetWindowSurface(window);
-    SDL_FillRect(screen_surface, NULL, SDL_MapRGB(screen_surface->format, 0, 0, 0)); // TODO: remove this. this only fill the surface with black but once we get the workers going it wont be needed.
+    g_screen_surface = SDL_GetWindowSurface(window);
+    
+    // Create a pool thread to contain our workers.
+    void *pool = pool_start(fractal_worker, HORIZONTAL_REGIONS * VERTICAL_REGIONS);
 
-    SDL_LockSurface(screen_surface);
-
-    ld_complex_t top = -2.5 + 1.0I;
-    ld_complex_t bottom = 1.0 - 1.0I;
-    struct buffer_t *buf = make_buffer(WINDOW_WIDTH, WINDOW_HEIGHT);
-    mandelbrot(top, bottom, buf);
-
-    SDL_Color col;
-    for (int i=0; i<WINDOW_WIDTH; ++i) {
-        for (int j=0; j<WINDOW_HEIGHT; ++j) {
-            col = buf->colors[i + j*buf->width];
-            set_pixel(screen_surface, i, j, SDL_MapRGB(screen_surface->format, col.r, col.g, col.b));
-        }
-    }
-    SDL_UnlockSurface(screen_surface);
-
-    ld_complex_t viewport_top = CMPLXL(-2.0, 2.0);
-    ld_complex_t viewport_bot = CMPLXL(2.0, -2.0);
+    ld_complex_t viewport_top = CMPLXL(-2.5, 1.0);
+    ld_complex_t viewport_bot = CMPLXL(1.0, -1.0);
 
     // For each region of the screen, create a fractal worker. Each worker will compute the part of
     // the fractal living in the region of the screen it is assigned by putting colors into a buffer.
@@ -73,13 +58,27 @@ int main() {
     for (int i = 0; i < HORIZONTAL_REGIONS; i++) {
         for (int j = 0; j < VERTICAL_REGIONS; j++) {
 
-            // 'Top' is top-left while 'bottom' ('bot') is bottom-right.
-            ld_complex_t region_top = CMPLXL(i * region_w, j * region_h);
-            ld_complex_t region_bot = CMPLXL(i * region_w + region_w, j * region_h + region_h);
+            size_t region_pixel_width = WINDOW_WIDTH / HORIZONTAL_REGIONS;
+            size_t region_pixel_height = WINDOW_HEIGHT / VERTICAL_REGIONS;
+            unsigned int px = i * region_pixel_width;
+            unsigned int py = j * region_pixel_height;
+            SDL_Rect geometry = {px, py, region_pixel_width, region_pixel_height};
+            
+            struct worker_luggage_t *luggage = malloc(sizeof (struct worker_luggage_t));
+            luggage->region_pixel_geometry = geometry;
 
-            fractal_worker(region_top, region_bot);
+            // 'Top' is top-left while 'bottom' ('bot') is bottom-right.
+            luggage->region_top = viewport_top + CMPLXL(i * region_w, -j * region_h);
+            luggage->region_bot = viewport_top + CMPLXL((i+1) * region_w, -(j+1) * region_h);
+            static wew = 0;
+            wew += 50;
+            luggage->wew = wew;
+
+            pool_enqueue(pool, (void *)luggage, 1);
         }
     }
+
+    pool_wait(pool);
 
     SDL_UpdateWindowSurface(window);
 
@@ -97,18 +96,22 @@ int main() {
     return EXIT_SUCCESS;
 }
 
-void fractal_worker(ld_complex_t region_top, ld_complex_t region_bot) {
-    // 1. Create buffer.
-    // 2. Use fractal driver to fill it with beautiful colors.
-    // 3. Map the buffer to the SDL buffer.
-    // 4. Delete buffer.
-    // 5. Die.
-//    struct buffer_t *buffer = make_buffer(/* we need to have the size of the region in pixels */);
-//    SDL_Surface *region_surface = SDL_CreateRGBSurfaceFrom(
-//        (void *)buffer->colors,
-//        /* int width, int height */, 8
-//    );
-//
-    return;
+void *fractal_worker(void *luggage_v) {
+
+    struct worker_luggage_t *luggage = (struct worker_luggage_t *)luggage_v;
+
+    int px = luggage->region_pixel_geometry.x;
+    int py = luggage->region_pixel_geometry.y;
+    int pw = luggage->region_pixel_geometry.w;
+    int ph = luggage->region_pixel_geometry.h;
+
+    SDL_Surface *worker_surface = SDL_CreateRGBSurface(0, pw, ph, 32, 0, 0, 0, 0);
+
+    int wew = luggage->wew;
+    SDL_FillRect(worker_surface, NULL, SDL_MapRGB(worker_surface->format, 0, 255, wew));
+
+    SDL_BlitSurface(worker_surface, NULL, g_screen_surface, &luggage->region_pixel_geometry);
+
+    return NULL;
 }
 
