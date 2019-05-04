@@ -51,6 +51,8 @@ int main() {
     ld_complex_t viewport_top = CMPLXL(-2.5, 1.0);
     ld_complex_t viewport_bot = CMPLXL(1.0, -1.0);
 
+
+
     // For each region of the screen, create a fractal worker. Each worker will compute the part of
     // the fractal living in the region of the screen it is assigned by putting colors into a buffer.
     long double region_w = (creall(viewport_bot) - creall(viewport_top)) / HORIZONTAL_REGIONS;
@@ -74,7 +76,21 @@ int main() {
             wew += 50;
             luggage->wew = wew;
 
-            pool_enqueue(pool, (void *)luggage, 1);
+    //        pool_enqueue(pool, (void *)luggage, 1);
+        }
+    }
+
+    ld_complex_t top = -2.5 + 1.0*I;
+    ld_complex_t bottom = 1.0 + -1.0*I;
+    struct buffer_t *buf = make_buffer(WINDOW_WIDTH, WINDOW_HEIGHT);
+    mandelbrot(top, bottom, buf);
+    SDL_Color col;
+
+    for (int i=0; i<WINDOW_WIDTH; ++i) {
+        for (int j=0; j<WINDOW_HEIGHT; ++j) {
+            col = buf->colors[i + j*buf->width];
+            // printf("%d %d %d\n", col.r, col.g, col.b);
+            set_pixel(g_screen_surface, i, j, SDL_MapRGB(g_screen_surface->format, col.r, col.g, col.b));
         }
     }
 
