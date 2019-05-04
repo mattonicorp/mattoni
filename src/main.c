@@ -13,9 +13,9 @@ int main() {
     SDL_CreateWindowAndRenderer(WINDOW_WIDTH, WINDOW_HEIGHT, 0, &window, &renderer);
     SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
 
-    for (int i=0; i<WINDOW_WIDTH; ++i) {
+    for (int i=0; i<1000; ++i) {
         for (int j=0; j<WINDOW_HEIGHT; ++j) {
-            SDL_RenderDrawPoint(renderer, i, j);
+    SDL_RenderDrawPoint(renderer, i, j);
         }
     }
     SDL_RenderPresent(renderer);
