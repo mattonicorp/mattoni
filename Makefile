@@ -11,7 +11,7 @@ OBJS=${patsubst ${SRCDIR}/%.c,${OBJDIR}/%.o,${SRCS}}
 EXEC=main
 TRASH=${OBJDIR} ${EXEC}
 
-CFLAGS=-I${INCDIR}
+CFLAGS=-I${INCDIR} -lm
 
 $(shell mkdir -p ${OBJDIR})
 

@@ -2,12 +2,6 @@
 
 #include "buffer.h"
 
-struct buffer_t {
-    SDL_Color *colors;
-    size_t width;
-    size_t height;
-};
-
 struct buffer_t *make_buffer(size_t screen_w, size_t screen_h) {
     
     struct buffer_t *buf = (struct buffer_t *)malloc(sizeof(struct buffer_t));
