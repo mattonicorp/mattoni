@@ -120,10 +120,17 @@ void *fractal_worker(void *luggage_v) {
     // we want to send into one big struct and also put it on the heap (no shared stack for threads!)
     struct worker_luggage_t *luggage = (struct worker_luggage_t *)luggage_v;
 
+    // Unpack the luggage.
     int px = luggage->region_pixel_geometry.x;
     int py = luggage->region_pixel_geometry.y;
     int pw = luggage->region_pixel_geometry.w;
     int ph = luggage->region_pixel_geometry.h;
+
+    ld_complex_t viewport_top = luggage->viewport_top;
+    ld_complex_t viewport_bot = luggage->viewport_bot;
+
+    struct buffer_t *buf = make_buffer(pw, ph);
+    mandelbrot(viewport_top, viewport_bot, buf);
 
     // This surface will receive the computed colors for the fractal and we will blit it onto the
     // shared global surface.
