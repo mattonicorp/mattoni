@@ -8,8 +8,8 @@
 #define WINDOW_WIDTH 1000
 #define WINDOW_HEIGHT 600
 
-#define HORIZONTAL_REGIONS 4
-#define VERTICAL_REGIONS 4
+#define HORIZONTAL_REGIONS 8
+#define VERTICAL_REGIONS 8
 
 /* Contains data to send to fractal workers. */
 struct worker_luggage_t {
@@ -59,10 +59,14 @@ int main() {
     ld_complex_t viewport_bot = CMPLXL(1.0, -1.0);
 
     SDL_Event event;
+    int dirty = 1;
     while (1) {
 
-        // Draw the fractal and don't forget to update the screen!
-        draw(viewport_top, viewport_bot);
+        if (dirty) {
+            dirty = 0;
+            printf("Redrawing fractal\n");
+            draw(viewport_top, viewport_bot);
+        }
         SDL_UpdateWindowSurface(window);
 
         if (SDL_PollEvent(&event) && event.type == SDL_QUIT) {
@@ -110,7 +114,7 @@ void draw(ld_complex_t viewport_top, ld_complex_t viewport_bot) {
     }
 
     // Wait until all workers are done rendering their part of the fractal.
-    pool_wait(g_pool);
+    //pool_wait(g_pool);
 }
 
 void *fractal_worker(void *luggage_v) {
@@ -129,15 +133,22 @@ void *fractal_worker(void *luggage_v) {
     ld_complex_t region_top = luggage->region_top;
     ld_complex_t region_bot = luggage->region_bot;
 
+    SDL_Surface *worker_surface = SDL_CreateRGBSurface(0, pw, ph, 32, 0, 0, 0, 0);
+
     struct buffer_t *buf = make_buffer(pw, ph);
     mandelbrot(region_top, region_bot, buf);
+    for (int x = 0; x < pw; x++) {
+        for (int y = 0; y < ph; y++) {
+            SDL_Color col = buf->colors[x + y * pw];
+            set_pixel(worker_surface, x, y, SDL_MapRGB(worker_surface->format, col.r, col.g, col.b));
+        }
+    }
 
-    SDL_Surface *worker_surface = SDL_CreateRGBSurface(0, pw, ph, 32, 0, 0, 0, 0);
-    SDL_FillRect(worker_surface, NULL, SDL_MapRGB(worker_surface->format, 0, 255, 0));
     SDL_BlitSurface(worker_surface, NULL, g_screen_surface, &luggage->region_pixel_geometry);
 
-    SDL_FreeSurface(worker_surface);
+    // The memory leak-free corner of this code :^)
     free(buf);
+    SDL_FreeSurface(worker_surface);
 
     return NULL;
 }
