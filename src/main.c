@@ -65,11 +65,15 @@ int main() {
         draw(viewport_top, viewport_bot);
         SDL_UpdateWindowSurface(window);
 
-        if (SDL_PollEvent(&event) && event.type == SDL_QUIT) {
-            break;
+        if (SDL_PollEvent(&event)) {
+            switch (event.type) {
+                case SDL_QUIT:
+                    goto exit_routine;
+            }
         }
     }
 
+    exit_routine:
     SDL_DestroyWindow(window);
     bail_window:
     SDL_Quit;
@@ -96,7 +100,7 @@ void draw(ld_complex_t viewport_top, ld_complex_t viewport_bot) {
             unsigned int px = i * region_w_p;
             unsigned int py = j * region_h_p;
             SDL_Rect geometry = {px, py, region_w_p, region_h_p};
-            
+
             // Put all the info needed by each worker into a 'luggage'. No mem leak as pthread_pool
             // will free everything once the task of a worker is done.
             struct worker_luggage_t *luggage = malloc(sizeof (struct worker_luggage_t));
