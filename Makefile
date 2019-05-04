@@ -11,12 +11,13 @@ OBJS=${patsubst ${SRCDIR}/%.c,${OBJDIR}/%.o,${SRCS}}
 EXEC=main
 TRASH=${OBJDIR} ${EXEC}
 
-CFLAGS=-I${INCDIR}
+CFLAGS=-I${INCDIR} -lm
+SDLFLAG=-lSDL2
 
 $(shell mkdir -p ${OBJDIR})
 
 ${EXEC}: ${OBJS}
-	${CC} ${CFLAGS} ${SRCS} -o $@ -l SDL2
+	${CC} ${CFLAGS} ${SRCS} ${SDLFLAG} -o $@
 
 ${OBJDIR}/%.o: src/%.c ${HEADERS}
 	${CC} ${CFLAGS} -c -o $@ $<

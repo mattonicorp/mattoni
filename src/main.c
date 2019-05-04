@@ -24,9 +24,7 @@ int main() {
     SDL_RenderClear(renderer);
     SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
     for (int i=0; i<WINDOW_WIDTH; ++i) {
-        SDL_RenderDrawPoint(renderer, i, 300 + WINDOW_HEIGHT);
     }
-    SDL_RenderPresent(renderer);
 
 
     while (1) {
