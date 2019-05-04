@@ -48,10 +48,18 @@ int main() {
     SDL_FillRect(screen_surface, NULL, SDL_MapRGB(screen_surface->format, 0, 0, 0)); // TODO: remove this. this only fill the surface with black but once we get the workers going it wont be needed.
 
     SDL_LockSurface(screen_surface);
-    set_pixel(screen_surface, 100, 100, 0xffffff);
-    printf("%x\n", SDL_MapRGB(screen_surface->format, 255, 255, 255));
-    for (int i = 0; i < WINDOW_WIDTH; i++) {
-        set_pixel(screen_surface, i, i, SDL_MapRGB(screen_surface->format, 255, 0, 0));
+
+    ld_complex_t top = -2.5 + 1.0I;
+    ld_complex_t bottom = 1.0 + 1.0I;
+    struct buffer_t *buf = make_buffer(WINDOW_WIDTH, WINDOW_HEIGHT);
+    mandelbrot(top, bottom, buf);
+
+    SDL_Color col;
+    for (int i=0; i<WINDOW_WIDTH; ++i) {
+        for (int j=0; j<WINDOW_HEIGHT; ++j) {
+            col = buf->colors[i + j*buf->width];
+            set_pixel(screen_surface, i, j, SDL_MapRGB(screen_surface->format, col.r, col.g, col.b));
+        }
     }
     SDL_UnlockSurface(screen_surface);
 
