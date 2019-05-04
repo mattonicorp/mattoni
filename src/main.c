@@ -72,6 +72,7 @@ void fractal_worker(ld_complex_t region_top, ld_complex_t region_bot) {
     // 3. Map the buffer to the SDL buffer.
     // 4. Delete buffer.
     // 5. Die.
+    struct buffer_t *buffer = make_buffer(/* we need to have the size of the region in pixels */);
     return;
 }
 
