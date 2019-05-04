@@ -8,7 +8,7 @@
 #include "buffer.h"
 #include "fractal.h"
 
-#define MAX_ITERATIONS 2000
+#define MAX_ITERATIONS 1000
 #define NUM_COLOURS 8
 
 // These different functions (have the same signature) will compute different fractals.
