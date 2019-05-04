@@ -141,7 +141,7 @@ void *fractal_worker(void *luggage_v) {
     SDL_Surface *worker_surface = SDL_CreateRGBSurface(0, pw, ph, 32, 0, 0, 0, 0);
 
     struct buffer_t *buf = make_buffer(pw, ph);
-    mandelbrot(region_top, region_bot, buf);
+    mandelbrot(region_top, region_bot, 2, buf);
     for (int x = 0; x < pw; x++) {
         for (int y = 0; y < ph; y++) {
             SDL_Color col = buf->colors[x + y * pw];
