@@ -11,6 +11,24 @@
 #define MAX_ITERATIONS 2000
 #define NUM_COLOURS 8
 
+// These different functions (have the same signature) will compute different fractals.
+void mandelbrot(ld_complex_t top, ld_complex_t bottom, unsigned int seed, struct buffer_t *buf);
+void julia(ld_complex_t top, ld_complex_t bottom, unsigned int seed, struct buffer_t *buf);
+
+// How to die:
+typedef void (*fractal_fn)(ld_complex_t, ld_complex_t, unsigned int, struct buffer_t *);
+fractal_fn fractal_types[2] = {
+    &mandelbrot,
+    &julia
+};
+
+void fractal(ld_complex_t top, ld_complex_t bottom, unsigned int seed, struct buffer_t *buf) {
+
+    // Depending on the seed, we choose a different type of fractal.
+    fractal_fn f = fractal_types[seed % 2];
+    f(top, bottom, seed, buf);
+}
+
 /* outputs a colour given a number of iterations */
 SDL_Color colour_iters(unsigned int num_iters) {
     int red, green, blue;
@@ -81,6 +99,7 @@ SDL_Color get_color(ld_complex_t z, unsigned int iteration) {
 
     return lerp(col1, col2, fract);
 }
+
 
 void julia(ld_complex_t top, ld_complex_t bottom, unsigned int seed, struct buffer_t *buf) {
 
