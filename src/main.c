@@ -41,18 +41,13 @@ int main() {
 
     SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
     for (int i=0; i<1000; ++i) {
+        SDL_Color col = colour_iters(i);
+        SDL_SetRenderDrawColor(renderer, col.r, col.g, col.b, 0);
         for (int j=0; j<WINDOW_HEIGHT; ++j) {
-            SDL_RenderDrawPoint(renderer, i, j);
+            SDL_RenderDrawPoint(renderer, i, j+WINDOW_HEIGHT);
         }
     }
     SDL_RenderPresent(renderer);
-
-    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
-    SDL_RenderClear(renderer);
-    SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
-    for (int i=0; i<WINDOW_WIDTH; ++i) {
-    }
-
 
     while (1) {
         if (SDL_PollEvent(&event) && event.type == SDL_QUIT) {
