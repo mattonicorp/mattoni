@@ -205,7 +205,7 @@ void *fractal_worker(void *luggage_v) {
 
     // This is the long computation part.
     struct buffer_t *buf = make_buffer(pw, ph);
-    fractal(region_top, region_bot, 2, buf);
+    fractal(region_top, region_bot, 1, buf);
 
     // Lock the global worker surface before copying the buffer on it because it is shared by all the threads.
     pthread_mutex_lock(&g_worker_surface_lock);

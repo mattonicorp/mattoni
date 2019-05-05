@@ -133,7 +133,7 @@ void julia(ld_complex_t top, ld_complex_t bottom, unsigned int seed, struct buff
         CMPLXL(0.285, 0.01),
         CMPLXL(-0.7269, 0.1889)
     };
-    ld_complex_t c = vals[seed % 4];
+    ld_complex_t c = vals[0];
 
     long double step_w = (creall(bottom) - creall(top)) / buf->width;
     long double step_h = (cimagl(bottom) - cimagl(top)) / buf->height;
