@@ -15,8 +15,8 @@
 #define WINDOW_WIDTH 1000
 #define WINDOW_HEIGHT 600
 
-#define HORIZONTAL_REGIONS 2
-#define VERTICAL_REGIONS 2
+#define HORIZONTAL_REGIONS 16
+#define VERTICAL_REGIONS 16
 
 /* Contains data to send to fractal workers. */
 struct worker_luggage_t {
@@ -32,12 +32,12 @@ pthread_mutex_t g_worker_surface_lock = PTHREAD_MUTEX_INITIALIZER;
 /* This is a thread pool that will contain our workers. */
 void *g_pool;
 
-void draw_fractal(mpc_t viewport_top, mpc_t viewport_bot);
-void *fractal_worker(void *luggage_v);
-void change_viewport(int down_x, int down_y, int up_x, int up_y,
-                     ld_complex_t *viewport_top, ld_complex_t *viewport_bottom);
-void change_centre(int centre_x, int centre_y, ld_complex_t *viewport_top, ld_complex_t *viewport_bottom);
-void zoom(float factor, ld_complex_t *viewport_top, ld_complex_t *viewport_bottom);
+void draw_fractal(mpc_t, mpc_t);
+void *fractal_worker(void *);
+
+void change_viewport(int, int, int, int, mpc_t *, mpc_t *);
+void change_centre(int, int, mpc_t *, mpc_t *);
+void zoom(float, mpc_t *, mpc_t *);
 
 int main() {
 
@@ -265,8 +265,8 @@ void *fractal_worker(void *luggage_v) {
     return NULL;
 }
 
-void change_viewport(int down_x, int down_y, int up_x, int up_y,
-                     ld_complex_t *viewport_top, ld_complex_t *viewport_bottom) {
+void change_viewport(int down_x, int down_y, int up_x, int up_y, ld_complex_t *viewport_top, ld_complex_t *viewport_bottom) {
+
     int top_x = (down_x < up_x) ? down_x : up_x;
     int top_y = (down_y < up_y) ? down_y : up_y;
     int bottom_x = (down_x < up_x) ? up_x : down_x;
