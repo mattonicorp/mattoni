@@ -1,8 +1,11 @@
 #include <stdlib.h>
-#include <pthread.h>
+#include <stdio.h>
 #include <complex.h>
+#include <pthread.h>
+
 #include <mpfr.h>
 #include <mpc.h>
+
 #include <SDL2/SDL.h>
 
 #include "fractal.h"
@@ -17,8 +20,6 @@
 
 /* Contains data to send to fractal workers. */
 struct worker_luggage_t {
-    ld_complex_t region_top;
-    ld_complex_t region_bot;
     char *region_top_str;
     char *region_bot_str;
     SDL_Rect region_pixel_geometry;
@@ -202,22 +203,16 @@ void draw_fractal(mpc_t viewport_top, mpc_t viewport_bot) {
             mpc_add(top, top, viewport_top, MPFR_RNDN);
 
             mpfr_mul_ui(t1, region_w, i+1, MPFR_RNDN);
-            mpfr_mul_ui(t2, region_h, j-1, MPFR_RNDN);
+            mpfr_mul_ui(t2, region_h, j+1, MPFR_RNDN);
             mpc_set_fr_fr(bot, t1, t2, MPFR_RNDN);
             mpc_add(bot, bot, viewport_top, MPFR_RNDN);
 
-            luggage->region_top_str = mpc_get_str(16, 0, top, MPFR_RNDN);
-            luggage->region_bot_str = mpc_get_str(16, 0, bot, MPFR_RNDN);
-
-            printf("%s %s\n", luggage->region_top_str, luggage->region_bot_str);
-
-            mpc_free_str(luggage->region_top_str);
-            mpc_free_str(luggage->region_bot_str);
+            luggage->region_top_str = mpc_get_str(36, 0, top, MPFR_RNDN);
+            luggage->region_bot_str = mpc_get_str(36, 0, bot, MPFR_RNDN);
 
             // Send the task to the pool, let some worker take care of it (for free; I love slavery).
             // Moreover the worker will automatically free the luggage when it's done.
-            // TODO: free the strings in the luggage given to the worker!!
-            //pool_enqueue(g_pool, (void *)luggage, 1);
+            pool_enqueue(g_pool, (void *)luggage, 1);
         }
     }
 
@@ -228,25 +223,31 @@ void draw_fractal(mpc_t viewport_top, mpc_t viewport_bot) {
 
 void *fractal_worker(void *luggage_v) {
 
+    mpc_t region_top, region_bot;
+    mpc_init2(region_top, 256);
+    mpc_init2(region_bot, 256);
+
     // Need to cast the luggage into its real type. All this deal with void pointers and struct luggage
     // is because a fractal worker can only receive one parameter, so we gotta bundle all the params
     // we want to send into one big struct and also put it on the heap (no shared stack for threads!)
     struct worker_luggage_t *luggage = (struct worker_luggage_t *)luggage_v;
 
-    // Unpack the luggage.
+    mpc_set_str(region_top, luggage->region_top_str, 36, MPC_RNDNN);
+    mpc_set_str(region_bot, luggage->region_bot_str, 36, MPC_RNDNN);
+
+    // That memory ain't free, sugar!
+    mpc_free_str(luggage->region_top_str);
+    mpc_free_str(luggage->region_bot_str);
+
     int px = luggage->region_pixel_geometry.x;
     int py = luggage->region_pixel_geometry.y;
     int pw = luggage->region_pixel_geometry.w;
     int ph = luggage->region_pixel_geometry.h;
 
-    ld_complex_t region_top = luggage->region_top;
-    ld_complex_t region_bot = luggage->region_bot;
-
-    // This is the long computation part.
     struct buffer_t *buf = make_buffer(pw, ph);
-    fractal(region_top, region_bot, 2, buf);
+    fractal(region_top, region_bot, 1, buf);
 
-    // Lock the global worker surface before copying the buffer on it because it is shared by all the threads.
+    // Lock the worker surface before copying the buffer on it because it is shared by all the threads.
     pthread_mutex_lock(&g_worker_surface_lock);
     for (int x = 0; x < pw; x++) {
         for (int y = 0; y < ph; y++) {
@@ -258,6 +259,9 @@ void *fractal_worker(void *luggage_v) {
     pthread_mutex_unlock(&g_worker_surface_lock);
 
     free(buf);
+    mpc_clear(region_top);
+    mpc_clear(region_bot);
+    
     return NULL;
 }
 
