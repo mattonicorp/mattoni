@@ -75,11 +75,10 @@ int main() {
     ld_complex_t viewport_bot = CMPLXL(1.0, -1.0);
 
     SDL_Event event;
+    SDL_Surface *sshot;
     int down_x, down_y;
     int up_x, up_y;
     int curr_x, curr_y;
-    // FILE *fp = fopen("out/screenshot.bmp", "wb");
-    // fclose(fp);
     int mouse_down = 0;
     static int dirty = 1;
     while (1) {
@@ -140,11 +139,20 @@ int main() {
                             zoom(0.5, &viewport_top, &viewport_bot);
                             goto do_the_dirty;
                         case SDLK_s:   // screenshot
-                            if (SDL_SaveBMP(g_screen_surface, "out/screenshot.bmp") == 0) {
+                            SDL_LockSurface(g_screen_surface);
+                            unsigned char *pixels;
+                            SDL_PixelFormat *fmt = g_screen_surface->format;
+                        //    sshot = SDL_CreateRGBSurface(0, 32, 32, 32, 0, 0, 0, 0);
+                          //  SDL_FillRect(sshot, NULL, SDL_MapRGB(sshot->format, 0, 0, 255));
+                            sshot = SDL_CreateRGBSurfaceFrom(g_screen_surface->pixels, g_screen_surface->w,
+                                                             g_screen_surface->h, fmt->BitsPerPixel,
+                                                             g_screen_surface->pitch, 0,0,0,0);
+                            if (SDL_SaveBMP(sshot, "out/screenshot.bmp") == 0) {
                                 printf("Saved screenshot to out/screenshot.bmp.\n");
                             } else {
                                 printf("Failed to save screenshot: %s\n", SDL_GetError());
                             }
+                            SDL_UnlockSurface(g_screen_surface);
                             break;
                         default:
                             break;
