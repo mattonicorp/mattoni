@@ -135,11 +135,7 @@ void mandelbrot(ld_complex_t top, ld_complex_t bottom, unsigned int seed, struct
             ld_complex_t z = CMPLXL(0.0, 0.0);
             ld_complex_t c = top + CMPLXL(i * step_w, j * step_h);
             while (cabsl(z) <= 2.0 && iteration < MAX_ITERATIONS) {
-                ld_complex_t old_z = z;
-                for (int p = 0; p < seed - 1; p++) {
-                    old_z *= z;
-                }
-                z = old_z + c;
+                z = z*z + c;
                 iteration++;
             }
 
@@ -147,3 +143,4 @@ void mandelbrot(ld_complex_t top, ld_complex_t bottom, unsigned int seed, struct
         }
     }
 }
+
