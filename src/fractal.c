@@ -103,7 +103,13 @@ SDL_Color get_color(ld_complex_t z, unsigned int iteration) {
 
 void julia(ld_complex_t top, ld_complex_t bottom, unsigned int seed, struct buffer_t *buf) {
 
-    ld_complex_t c = CMPLXL(-0.8, 0.156);
+    ld_complex_t vals[4] = {
+        CMPLXL(-0.8, 0.156),
+        CMPLXL(-0.4, 0.6),
+        CMPLXL(0.285, 0.01),
+        CMPLXL(-0.7269, 0.1889)
+    };
+    ld_complex_t c = vals[((seed + 1)/2) % 4];
 
     long double step_w = (creall(bottom) - creall(top)) / buf->width;
     long double step_h = (cimagl(bottom) - cimagl(top)) / buf->height;
