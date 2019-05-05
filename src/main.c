@@ -78,6 +78,7 @@ int main() {
         // printf("Curr pos: %d %d\n", curr_x, curr_y);
 
         if (dirty) {
+            pool_wait(g_pool);
             /* Ooh, she be dirty */
             dirty = 0;
             printf("Redrawing fractal\n");

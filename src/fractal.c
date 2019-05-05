@@ -143,3 +143,4 @@ void mandelbrot(ld_complex_t top, ld_complex_t bottom, unsigned int seed, struct
         }
     }
 }
+
