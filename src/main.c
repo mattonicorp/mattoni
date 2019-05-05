@@ -31,6 +31,7 @@ void *fractal_worker(void *luggage_v);
 void change_viewport(int down_x, int down_y, int up_x, int up_y,
                      ld_complex_t *viewport_top, ld_complex_t *viewport_bottom);
 void change_centre(int centre_x, int centre_y, ld_complex_t *viewport_top, ld_complex_t *viewport_bottom);
+void zoom(float factor, ld_complex_t *viewport_top, ld_complex_t *viewport_bottom);
 
 int main() {
 
@@ -104,21 +105,33 @@ int main() {
                 case SDL_KEYDOWN:
                     switch (event.key.keysym.sym) {
                         /* move by sending specially chosen boundaries to change_viewport */
+                        case SDLK_h:
                         case SDLK_LEFT:
                             change_centre(0, WINDOW_HEIGHT/2, &viewport_top, &viewport_bot);
-                            goto set_dirty;
+                            goto do_the_dirty;
+                        case SDLK_l:
                         case SDLK_RIGHT:
                             change_centre(WINDOW_WIDTH, WINDOW_HEIGHT/2, &viewport_top, &viewport_bot);
-                            goto set_dirty;
+                            goto do_the_dirty;
+                        case SDLK_k:
                         case SDLK_UP:
                             change_centre(WINDOW_WIDTH/2, 0, &viewport_top, &viewport_bot);
-                            goto set_dirty;
+                            goto do_the_dirty;
+                        case SDLK_j:
                         case SDLK_DOWN:
                             change_centre(WINDOW_WIDTH/2, WINDOW_HEIGHT, &viewport_top, &viewport_bot);
-                            goto set_dirty;
+                            goto do_the_dirty;
+                        case SDLK_SPACE: // zoom out
+                        case SDLK_n:
+                            zoom(2.0, &viewport_top, &viewport_bot);
+                            goto do_the_dirty;
+                        case SDLK_RETURN: // zoom in
+                        case SDLK_u:
+                            zoom(0.5, &viewport_top, &viewport_bot);
+                            goto do_the_dirty;
                         default:
                             break;
-                        set_dirty:
+                        do_the_dirty:
                             dirty = 1;
 
                     }
@@ -191,7 +204,7 @@ void *fractal_worker(void *luggage_v) {
 
     // This is the long computation part.
     struct buffer_t *buf = make_buffer(pw, ph);
-    fractal(region_top, region_bot, 2, buf);
+    fractal(region_top, region_bot, 1, buf);
 
     // Lock the global worker surface before copying the buffer on it because it is shared by all the threads.
     pthread_mutex_lock(&g_worker_surface_lock);
@@ -265,3 +278,22 @@ void change_centre(int centre_x, int centre_y, ld_complex_t *viewport_top, ld_co
     *viewport_bottom = CMPLXL(new_bottom_real, new_bottom_imag);
 }
 
+void zoom(float factor, ld_complex_t *viewport_top, ld_complex_t *viewport_bottom) {
+    long double real_width = (creall(*viewport_bottom) - creall(*viewport_top));
+    long double imag_height = (cimagl(*viewport_bottom) - cimagl(*viewport_top));
+
+    printf("New width: %LG. New height: %LG.\n", real_width, imag_height);
+
+    long double centre_real = creall(*viewport_top) + real_width/2;
+    long double centre_imag = cimagl(*viewport_top) + imag_height/2;
+
+    printf("Centre: %LG %LG\n", centre_real, centre_imag);
+
+    long double new_top_real = centre_real - factor*real_width/2;
+    long double new_top_imag = centre_imag - factor*imag_height/2;
+    long double new_bottom_real = centre_real + factor*real_width/2;
+    long double new_bottom_imag = centre_imag + factor*imag_height/2;
+
+    *viewport_top = CMPLXL(new_top_real, new_top_imag);
+    *viewport_bottom = CMPLXL(new_bottom_real, new_bottom_imag);
+}
