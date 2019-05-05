@@ -14,18 +14,20 @@
 // These different functions (have the same signature) will compute different fractals.
 void mandelbrot(ld_complex_t top, ld_complex_t bottom, unsigned int seed, struct buffer_t *buf);
 void julia(ld_complex_t top, ld_complex_t bottom, unsigned int seed, struct buffer_t *buf);
+void ship(ld_complex_t top, ld_complex_t bottom, unsigned int seed, struct buffer_t *buf);
 
 // How to die:
 typedef void (*fractal_fn)(ld_complex_t, ld_complex_t, unsigned int, struct buffer_t *);
-fractal_fn fractal_types[2] = {
+fractal_fn fractal_types[3] = {
     &mandelbrot,
-    &julia
+    &julia,
+    &ship
 };
 
 void fractal(ld_complex_t top, ld_complex_t bottom, unsigned int seed, struct buffer_t *buf) {
 
     // Depending on the seed, we choose a different type of fractal.
-    fractal_fn f = fractal_types[seed % 2];
+    fractal_fn f = fractal_types[seed % 3];
     f(top, bottom, seed, buf);
 }
 
@@ -100,6 +102,27 @@ SDL_Color get_color(ld_complex_t z, unsigned int iteration) {
     return lerp(col1, col2, fract);
 }
 
+void ship(ld_complex_t top, ld_complex_t bottom, unsigned int seed, struct buffer_t *buf) {
+
+    long double step_w = (creall(bottom) - creall(top)) / buf->width;
+    long double step_h = (cimagl(bottom) - cimagl(top)) / buf->height;
+    for (unsigned int i = 0; i < buf->width; i++) {
+        for (unsigned int j = 0; j < buf->height; j++) {
+            
+            unsigned int iteration = 0;
+            
+            ld_complex_t z = CMPLXL(0.0, 0.0);
+            ld_complex_t c = top + CMPLXL(i * step_w, j * step_h);
+            while (cabs(z) <= 2.0 && iteration < MAX_ITERATIONS) {
+                z = CMPLXL(creall(z)*creall(z) - cimagl(z)*cimagl(z), 2.0*fabsl(z)*creall(z));
+                z += c;
+                iteration++;
+            }
+
+            set_color(buf, i, j, get_color(z, iteration));
+        }
+    }
+}
 
 void julia(ld_complex_t top, ld_complex_t bottom, unsigned int seed, struct buffer_t *buf) {
 
@@ -109,7 +132,7 @@ void julia(ld_complex_t top, ld_complex_t bottom, unsigned int seed, struct buff
         CMPLXL(0.285, 0.01),
         CMPLXL(-0.7269, 0.1889)
     };
-    ld_complex_t c = vals[((seed + 1)/2) % 4];
+    ld_complex_t c = vals[seed % 4];
 
     long double step_w = (creall(bottom) - creall(top)) / buf->width;
     long double step_h = (cimagl(bottom) - cimagl(top)) / buf->height;
