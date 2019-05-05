@@ -25,3 +25,5 @@
 *.cmx
 *_build*
 *.mix
+
+# Ignore output folder

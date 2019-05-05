@@ -15,7 +15,8 @@ Run `./main` from the main directory to start Mattoni. In the window that opens,
 + Click and drag a box to zoom in on an area
 + Pan using `H/J/K/L` or the arrow keys
 + Zoom in with either `U` or `Return`
-+ Zoom out with eiter `N` or `Spacebar`
++ Zoom out with either `N` or `Spacebar`
++ Save a screenshot to `out/screenshot.bmp` by pressing `S`. Note that only one screenshot is ever saved at a time, so make sure you do whatever you want with your old screenshot before overwriting. Running `make clean` also deletes screenshots.
 
 ![julia1](media/julia1.png)
 

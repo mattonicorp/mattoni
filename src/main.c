@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include <stdlib.h>
 #include <pthread.h>
 #include <SDL2/SDL.h>
@@ -77,6 +78,8 @@ int main() {
     int down_x, down_y;
     int up_x, up_y;
     int curr_x, curr_y;
+    // FILE *fp = fopen("out/screenshot.bmp", "wb");
+    // fclose(fp);
     int mouse_down = 0;
     static int dirty = 1;
     while (1) {
@@ -136,6 +139,13 @@ int main() {
                         case SDLK_u:
                             zoom(0.5, &viewport_top, &viewport_bot);
                             goto do_the_dirty;
+                        case SDLK_s:   // screenshot
+                            if (SDL_SaveBMP(g_screen_surface, "out/screenshot.bmp") == 0) {
+                                printf("Saved screenshot to out/screenshot.bmp.\n");
+                            } else {
+                                printf("Failed to save screenshot: %s\n", SDL_GetError());
+                            }
+                            break;
                         default:
                             break;
                         do_the_dirty:
