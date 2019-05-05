@@ -9,7 +9,7 @@
 #include "fractal.h"
 
 #define MAX_ITERATIONS 400
-#define NUM_COLOURS 8
+#define NUM_COLOURS 9
 
 // These different functions (have the same signature) will compute different fractals.
 void mandelbrot(ld_complex_t top, ld_complex_t bottom, unsigned int seed, struct buffer_t *buf);
@@ -33,10 +33,11 @@ void fractal(ld_complex_t top, ld_complex_t bottom, unsigned int seed, struct bu
 SDL_Color colour_iters(unsigned int num_iters) {
     int red, green, blue;
     static float colour[NUM_COLOURS][3] = {
-        {0.313, 0.164, 0.062}, // brown
+        {0, 0, 0}, // black
+        {0.501, 0.164, 0.074}, // brown
         {1, 0.5, 0}, // orange
         {1, 1, 0}, // yellow
-        {0.2, 0.3, 0.06}, // green
+        {0.101, 0.501, 0}, // green
         {0, 1, 1}, // cyan
         {0, 0, 1}, // blue
         {0.25, 0, 1}, // purple
