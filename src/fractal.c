@@ -115,8 +115,14 @@ void ship(ld_complex_t top, ld_complex_t bottom, unsigned int seed, struct buffe
             ld_complex_t z = CMPLXL(0.0, 0.0);
             ld_complex_t c = top + CMPLXL(i * step_w, j * step_h);
             while (cabs(z) <= 2.0 && iteration < MAX_ITERATIONS) {
-                z = CMPLXL(creall(z)*creall(z) - cimagl(z)*cimagl(z), 2.0*fabsl(z)*creall(z));
-                z += c;
+                long double zx = creall(z);
+                long double zy = cimagl(z);
+                long double x = creall(c);
+                long double y = cimagl(c);
+                long double xtemp = zx*zx - zy*zy + x;
+                zy = fabsl(2*zx*zy) + y;
+                zx = fabsl(xtemp);
+                z = CMPLXL(zx, zy);
                 iteration++;
             }
 
