@@ -27,3 +27,4 @@
 *.mix
 
 # Ignore output folder
+out
