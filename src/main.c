@@ -1,5 +1,8 @@
 #include <stdlib.h>
 #include <pthread.h>
+#include <complex.h>
+#include <mpfr.h>
+#include <mpc.h>
 #include <SDL2/SDL.h>
 
 #include "fractal.h"
@@ -9,13 +12,15 @@
 #define WINDOW_WIDTH 1000
 #define WINDOW_HEIGHT 600
 
-#define HORIZONTAL_REGIONS 16
-#define VERTICAL_REGIONS 16
+#define HORIZONTAL_REGIONS 2
+#define VERTICAL_REGIONS 2
 
 /* Contains data to send to fractal workers. */
 struct worker_luggage_t {
     ld_complex_t region_top;
     ld_complex_t region_bot;
+    char *region_top_str;
+    char *region_bot_str;
     SDL_Rect region_pixel_geometry;
 };
 
@@ -26,7 +31,7 @@ pthread_mutex_t g_worker_surface_lock = PTHREAD_MUTEX_INITIALIZER;
 /* This is a thread pool that will contain our workers. */
 void *g_pool;
 
-void draw_fractal(ld_complex_t viewport_top, ld_complex_t viewport_bot);
+void draw_fractal(mpc_t viewport_top, mpc_t viewport_bot);
 void *fractal_worker(void *luggage_v);
 void change_viewport(int down_x, int down_y, int up_x, int up_y,
                      ld_complex_t *viewport_top, ld_complex_t *viewport_bottom);
@@ -64,8 +69,11 @@ int main() {
     // a fixed shape but it is independant of the actual window (and window's surface) size. One
     // major difference is that here the coordinate system is like in the complex plane (increasing y
     // values go 'up') while the SDL coordinate system is different (increasing y go 'down').
-    ld_complex_t viewport_top = CMPLXL(-2.5, 1.0);
-    ld_complex_t viewport_bot = CMPLXL(1.0, -1.0);
+    mpc_t viewport_top, viewport_bot;
+    mpc_init2(viewport_top, 256);
+    mpc_init2(viewport_bot, 256);
+    mpc_set_dc(viewport_top, CMPLX(-2.5, 1.0), MPC_RNDNN);
+    mpc_set_dc(viewport_bot, CMPLX(1.0, -1.0), MPC_RNDNN);
 
     SDL_Event event;
     int down_x, down_y;
@@ -74,8 +82,6 @@ int main() {
     int mouse_down = 0;
     static int dirty = 1;
     while (1) {
-        // SDL_GetMouseState(&curr_x, &curr_y);
-        // printf("Curr pos: %d %d\n", curr_x, curr_y);
 
         if (dirty) {
             pool_wait(g_pool);
@@ -91,58 +97,62 @@ int main() {
             switch (event.type) {
                 case SDL_QUIT:
                     goto exit_routine;
-                case SDL_MOUSEBUTTONDOWN:
-                    SDL_GetMouseState(&down_x, &down_y);
-                    break;
-                case SDL_MOUSEBUTTONUP:
-                    SDL_GetMouseState(&up_x, &up_y);
-                    printf("Mouse down: %d %d\n", down_x, down_y);
-                    printf("Mouse up: %d %d\n", up_x, up_y);
-                    change_viewport(down_x, down_y, up_x, up_y, &viewport_top, &viewport_bot);
-                    printf("Viewport top: %LG %LG\n", creall(viewport_top), cimagl(viewport_top));
-                    printf("Viewport bottom: %LG %LG\n", creall(viewport_bot), cimagl(viewport_bot));
-                    dirty = 1;
-                    break;
-                case SDL_KEYDOWN:
-                    switch (event.key.keysym.sym) {
-                        /* move by sending specially chosen boundaries to change_viewport */
-                        case SDLK_h:
-                        case SDLK_LEFT:
-                            change_centre(0, WINDOW_HEIGHT/2, &viewport_top, &viewport_bot);
-                            goto do_the_dirty;
-                        case SDLK_l:
-                        case SDLK_RIGHT:
-                            change_centre(WINDOW_WIDTH, WINDOW_HEIGHT/2, &viewport_top, &viewport_bot);
-                            goto do_the_dirty;
-                        case SDLK_k:
-                        case SDLK_UP:
-                            change_centre(WINDOW_WIDTH/2, 0, &viewport_top, &viewport_bot);
-                            goto do_the_dirty;
-                        case SDLK_j:
-                        case SDLK_DOWN:
-                            change_centre(WINDOW_WIDTH/2, WINDOW_HEIGHT, &viewport_top, &viewport_bot);
-                            goto do_the_dirty;
-                        case SDLK_SPACE: // zoom out
-                        case SDLK_n:
-                            zoom(2.0, &viewport_top, &viewport_bot);
-                            goto do_the_dirty;
-                        case SDLK_RETURN: // zoom in
-                        case SDLK_u:
-                            zoom(0.5, &viewport_top, &viewport_bot);
-                            goto do_the_dirty;
-                        default:
-                            break;
-                        do_the_dirty:
-                            dirty = 1;
-
-                    }
-                    break;
-
             }
         }
+//                case SDL_MOUSEBUTTONDOWN:
+//                    SDL_GetMouseState(&down_x, &down_y);
+//                    break;
+//                case SDL_MOUSEBUTTONUP:
+//                    SDL_GetMouseState(&up_x, &up_y);
+//                    printf("Mouse down: %d %d\n", down_x, down_y);
+//                    printf("Mouse up: %d %d\n", up_x, up_y);
+//                    change_viewport(down_x, down_y, up_x, up_y, &viewport_top, &viewport_bot);
+//                    printf("Viewport top: %LG %LG\n", creall(viewport_top), cimagl(viewport_top));
+//                    printf("Viewport bottom: %LG %LG\n", creall(viewport_bot), cimagl(viewport_bot));
+//                    dirty = 1;
+//                    break;
+//                case SDL_KEYDOWN:
+//                    switch (event.key.keysym.sym) {
+//                        /* move by sending specially chosen boundaries to change_viewport */
+//                        case SDLK_h:
+//                        case SDLK_LEFT:
+//                            change_centre(0, WINDOW_HEIGHT/2, &viewport_top, &viewport_bot);
+//                            goto do_the_dirty;
+//                        case SDLK_l:
+//                        case SDLK_RIGHT:
+//                            change_centre(WINDOW_WIDTH, WINDOW_HEIGHT/2, &viewport_top, &viewport_bot);
+//                            goto do_the_dirty;
+//                        case SDLK_k:
+//                        case SDLK_UP:
+//                            change_centre(WINDOW_WIDTH/2, 0, &viewport_top, &viewport_bot);
+//                            goto do_the_dirty;
+//                        case SDLK_j:
+//                        case SDLK_DOWN:
+//                            change_centre(WINDOW_WIDTH/2, WINDOW_HEIGHT, &viewport_top, &viewport_bot);
+//                            goto do_the_dirty;
+//                        case SDLK_SPACE: // zoom out
+//                        case SDLK_n:
+//                            zoom(2.0, &viewport_top, &viewport_bot);
+//                            goto do_the_dirty;
+//                        case SDLK_RETURN: // zoom in
+//                        case SDLK_u:
+//                            zoom(0.5, &viewport_top, &viewport_bot);
+//                            goto do_the_dirty;
+//                        default:
+//                            break;
+//                        do_the_dirty:
+//                            dirty = 1;
+//
+//                    }
+//                    break;
+//
+//            }
+//        }
     }
 
     exit_routine:
+    mpc_clear(viewport_top);
+    mpc_clear(viewport_bot);
     SDL_FreeSurface(g_worker_surface);
     SDL_DestroyWindow(window);
     bail_window:
@@ -151,19 +161,28 @@ int main() {
     return EXIT_SUCCESS;
 }
 
-void draw_fractal(ld_complex_t viewport_top, ld_complex_t viewport_bot) {
+void draw_fractal(mpc_t viewport_top, mpc_t viewport_bot) {
 
-    // Each region of the screen has a size as measured in the complex plane and a size in pixels.
-    // Both are needed but they are unrelated to each other, despite the very similar names.
-    long double region_w = (creall(viewport_bot) - creall(viewport_top)) / HORIZONTAL_REGIONS;
-    long double region_h = (cimagl(viewport_top) - cimagl(viewport_bot)) / VERTICAL_REGIONS;
+    // Compute the size (width and height) of each region of the screen in terms of complex numbers.
+    mpfr_t region_w, region_h, t1, t2;
+    mpfr_inits2(256, region_w, region_h, t1, t2, (mpfr_ptr)0);
+    mpfr_sub(region_w, mpc_realref(viewport_bot), mpc_realref(viewport_top), MPFR_RNDN);
+    mpfr_sub(region_h, mpc_imagref(viewport_bot), mpc_imagref(viewport_top), MPFR_RNDN);
+    mpfr_div_ui(region_w, region_w, (unsigned long int)HORIZONTAL_REGIONS, MPFR_RNDN);
+    mpfr_div_ui(region_h, region_h, (unsigned long int)VERTICAL_REGIONS, MPFR_RNDN);
+
+    mpc_t top, bot;
+    mpc_init2(top, 256);
+    mpc_init2(bot, 256);
+
+    // Compute the size of each region again but this time in terms of pixels!
     size_t region_w_p = WINDOW_WIDTH / HORIZONTAL_REGIONS;
     size_t region_h_p = WINDOW_HEIGHT / VERTICAL_REGIONS;
 
     // For each region of the screen, create a fractal worker. Each worker will compute the part of
     // the fractal living in the region of the screen it is assigned by putting colors into a buffer.
-    for (int i = 0; i < HORIZONTAL_REGIONS; i++) {
-        for (int j = 0; j < VERTICAL_REGIONS; j++) {
+    for (unsigned long int i = 0; i < HORIZONTAL_REGIONS; i++) {
+        for (unsigned long int j = 0; j < VERTICAL_REGIONS; j++) {
 
             // The following lines are to compute the position of each region in PIXELS. This is
             // for RENDERING and is not related to the actual computation of fractals.
@@ -171,20 +190,40 @@ void draw_fractal(ld_complex_t viewport_top, ld_complex_t viewport_bot) {
             unsigned int py = j * region_h_p;
             SDL_Rect geometry = {px, py, region_w_p, region_h_p};
 
-            // Put all the info needed by each worker into a 'luggage'. No mem leak as pthread_pool
-            // will free everything once the task of a worker is done.
             struct worker_luggage_t *luggage = malloc(sizeof (struct worker_luggage_t));
             luggage->region_pixel_geometry = geometry;
-            luggage->region_top = viewport_top + CMPLXL(i * region_w, -j * region_h);
-            luggage->region_bot = viewport_top + CMPLXL((i+1) * region_w, -(j+1) * region_h);
+            //luggage->region_top = viewport_top + CMPLXL(i * region_w, -j * region_h);
+            //luggage->region_bot = viewport_top + CMPLXL((i+1) * region_w, -(j+1) * region_h);
+
+            // Compute the bottom-right and top-left points of the current region (as complex numbers).
+            mpfr_mul_ui(t1, region_w, i, MPFR_RNDN);
+            mpfr_mul_ui(t2, region_h, j, MPFR_RNDN);
+            mpc_set_fr_fr(top, t1, t2, MPFR_RNDN);
+            mpc_add(top, top, viewport_top, MPFR_RNDN);
+
+            mpfr_mul_ui(t1, region_w, i+1, MPFR_RNDN);
+            mpfr_mul_ui(t2, region_h, j-1, MPFR_RNDN);
+            mpc_set_fr_fr(bot, t1, t2, MPFR_RNDN);
+            mpc_add(bot, bot, viewport_top, MPFR_RNDN);
+
+            luggage->region_top_str = mpc_get_str(16, 0, top, MPFR_RNDN);
+            luggage->region_bot_str = mpc_get_str(16, 0, bot, MPFR_RNDN);
+
+            printf("%s %s\n", luggage->region_top_str, luggage->region_bot_str);
+
+            mpc_free_str(luggage->region_top_str);
+            mpc_free_str(luggage->region_bot_str);
 
             // Send the task to the pool, let some worker take care of it (for free; I love slavery).
-            pool_enqueue(g_pool, (void *)luggage, 1);
+            // Moreover the worker will automatically free the luggage when it's done.
+            // TODO: free the strings in the luggage given to the worker!!
+            //pool_enqueue(g_pool, (void *)luggage, 1);
         }
     }
 
-    // Wait until all workers are done rendering their part of the fractal.
-    //pool_wait(g_pool);
+    mpc_clear(bot);
+    mpc_clear(top);
+    mpfr_clears(region_w, region_h, t1, t2, (mpfr_ptr)0);
 }
 
 void *fractal_worker(void *luggage_v) {
