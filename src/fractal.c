@@ -24,10 +24,10 @@ fractal_fn fractal_types[3] = {
     &ship
 };
 
-void fractal(ld_complex_t top, ld_complex_t bottom, unsigned int seed, struct buffer_t *buf) {
+void fractal(ld_complex_t top, ld_complex_t bottom, int which_fractal, unsigned int seed, struct buffer_t *buf) {
 
     // Depending on the seed, we choose a different type of fractal.
-    fractal_fn f = fractal_types[seed % 3];
+    fractal_fn f = fractal_types[which_fractal % 3];
     f(top, bottom, seed, buf);
 }
 
@@ -109,12 +109,12 @@ void ship(ld_complex_t top, ld_complex_t bottom, unsigned int seed, struct buffe
     long double step_h = (cimagl(bottom) - cimagl(top)) / buf->height;
     for (unsigned int i = 0; i < buf->width; i++) {
         for (unsigned int j = 0; j < buf->height; j++) {
-            
+
             unsigned int iteration = 0;
-            
+
             ld_complex_t z = CMPLXL(0.0, 0.0);
             ld_complex_t c = top + CMPLXL(i * step_w, j * step_h);
-            while (cabs(z) <= 2.0 && iteration < MAX_ITERATIONS) {
+            while (cabsl(z) <= 2.0 && iteration < MAX_ITERATIONS/6) {
                 long double zx = creall(z);
                 long double zy = cimagl(z);
                 long double x = creall(c);
@@ -139,7 +139,7 @@ void julia(ld_complex_t top, ld_complex_t bottom, unsigned int seed, struct buff
         CMPLXL(0.285, 0.01),
         CMPLXL(-0.7269, 0.1889)
     };
-    ld_complex_t c = vals[0];
+    ld_complex_t c = vals[seed % 4];
 
     long double step_w = (creall(bottom) - creall(top)) / buf->width;
     long double step_h = (cimagl(bottom) - cimagl(top)) / buf->height;

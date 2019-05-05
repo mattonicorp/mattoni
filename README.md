@@ -6,7 +6,7 @@ Mattoni is an interactive fractal explorer.
 
 ### Setup
 
-First, you must have [GCC](https://gcc.gnu.org) and [SDL2](https://www.libsdl.org/download-2.0.php) installed on your system. To compile, run `make` from the project's main folder. To remove the compiled executable and any generated object files, run `make clean`.
+First, you must have [GCC](https://gcc.gnu.org) and [SDL2](https://www.libsdl.org/download-2.0.php) installed on your system. After you're set up, run `make` from the project's main folder to compile Mattoni. To remove the compiled executable and any generated object files, run `make clean`.
 
 ### Usage
 
@@ -17,7 +17,7 @@ Run `./main` from the main directory to start Mattoni. In the window that opens,
 + Zoom in with either `U` or `Return`
 + Zoom out with eiter `N` or `Spacebar`
 
-![julia3](media/julia3.png)
+![julia1](media/julia1.png)
 
 ### Authors
 

@@ -23,6 +23,10 @@ SDL_Surface *g_screen_surface;
 SDL_Surface *g_worker_surface;
 pthread_mutex_t g_worker_surface_lock = PTHREAD_MUTEX_INITIALIZER;
 
+/* Options that may be set by the user */
+int g_which_fractal = 0;
+unsigned int g_seed = 0;
+
 /* This is a thread pool that will contain our workers. */
 void *g_pool;
 
@@ -32,8 +36,10 @@ void change_viewport(int down_x, int down_y, int up_x, int up_y,
                      ld_complex_t *viewport_top, ld_complex_t *viewport_bottom);
 void change_centre(int centre_x, int centre_y, ld_complex_t *viewport_top, ld_complex_t *viewport_bottom);
 void zoom(float factor, ld_complex_t *viewport_top, ld_complex_t *viewport_bottom);
+void startup();
 
 int main() {
+    startup();
 
     // Init SDL and stuff.
     if (SDL_Init(SDL_INIT_VIDEO) < 0) {
@@ -81,7 +87,7 @@ int main() {
             pool_wait(g_pool);
             /* Ooh, she be dirty */
             dirty = 0;
-            printf("Redrawing fractal\n");
+            printf("Drawing fractal.\n");
             draw_fractal(viewport_top, viewport_bot);
         }
 
@@ -205,7 +211,7 @@ void *fractal_worker(void *luggage_v) {
 
     // This is the long computation part.
     struct buffer_t *buf = make_buffer(pw, ph);
-    fractal(region_top, region_bot, 1, buf);
+    fractal(region_top, region_bot, g_which_fractal, g_seed, buf);
 
     // Lock the global worker surface before copying the buffer on it because it is shared by all the threads.
     pthread_mutex_lock(&g_worker_surface_lock);
@@ -297,4 +303,39 @@ void zoom(float factor, ld_complex_t *viewport_top, ld_complex_t *viewport_botto
 
     *viewport_top = CMPLXL(new_top_real, new_top_imag);
     *viewport_bottom = CMPLXL(new_bottom_real, new_bottom_imag);
+}
+
+void startup() {
+    printf("Welcome to Mattoni, the People's Fractal Generator!\n");
+    char buffer1[50];
+    char buffer2[50];
+    int running = 1;
+    do {
+        int c;
+        printf("What would you like to do? \n");
+        printf("1) Draw the Mandelbrot set\n");
+        printf("2) Draw a Julia set\n");
+        printf("3) Draw the burning ship fractal\n");
+        scanf("%s", buffer1);
+        switch (buffer1[0]) {
+            case '2':
+                g_which_fractal = 1;
+                printf("Enter an integer seed: ");
+                scanf("%s", buffer2);
+                g_seed = (unsigned int) (buffer2[0] - '0');
+                printf("%u\n", g_seed);
+                running = 0;
+                break;
+            case '1':
+            case '3':
+                g_which_fractal = buffer1[0] - '1';
+                running = 0;
+                break;
+            default:
+                printf("Invalid option.\n");
+                continue;
+        }
+        while ( (c = getchar()) != '\n' && c != EOF ) { }
+    } while (running);
+
 }
