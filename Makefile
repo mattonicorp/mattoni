@@ -3,14 +3,13 @@ CC=gcc
 SRCDIR=src
 INCDIR=include
 OBJDIR=obj
-OUTDIR=out
 
 SRCS=${wildcard ${SRCDIR}/*.c}
 INCS=${wildcard ${INCDIR}/*.h}
 OBJS=${patsubst ${SRCDIR}/%.c,${OBJDIR}/%.o,${SRCS}}
 
 EXEC=main
-TRASH=${OBJDIR} ${OUTDIR} ${EXEC} main.dSYM
+TRASH=${OBJDIR} ${EXEC} main.dSYM
 
 CFLAGS=-I${INCDIR} -lm -lpthread -g
 

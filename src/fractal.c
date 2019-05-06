@@ -126,7 +126,7 @@ void ship(ld_complex_t top, ld_complex_t bottom, unsigned int seed, struct buffe
                 iteration++;
             }
 
-            set_color(buf, i, buf->height - j, get_color(z, iteration));
+            set_color(buf, i, j, get_color(z, iteration));
         }
     }
 }

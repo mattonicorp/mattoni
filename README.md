@@ -20,7 +20,7 @@ After that, in the window that opens, you can:
 + Pan using `H/J/K/L` or the arrow keys
 + Zoom in with either `U` or `Return`
 + Zoom out with either `N` or `Spacebar`
-+ Save a screenshot to `out/screenshot.bmp` by pressing `S`. Note that only one screenshot is ever saved at a time, so make sure you do whatever you want with your old screenshot before overwriting. Running `make clean` also deletes screenshots.
++ Save a bitmap screenshot to the `out` folder simply by pressing `S`.
 
 ![julia1](media/julia1.png)
 

@@ -1,14 +1,15 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <pthread.h>
+#include <time.h>
 #include <SDL2/SDL.h>
 
 #include "fractal.h"
 #include "pixel_ops.h"
 #include "pthread_pool.h"
 
-#define WINDOW_WIDTH 1000
-#define WINDOW_HEIGHT 600
+#define WINDOW_WIDTH 1600
+#define WINDOW_HEIGHT 1200
 
 #define HORIZONTAL_REGIONS 16
 #define VERTICAL_REGIONS 16
@@ -142,13 +143,18 @@ int main() {
                             SDL_LockSurface(g_screen_surface);
                             unsigned char *pixels;
                             SDL_PixelFormat *fmt = g_screen_surface->format;
+                            time_t now = time(0);
+                            struct tm *tstruct;
+                            tstruct = localtime(&now);
+                            char fname[80];
+                            strftime(fname, 80, "out/mattoni%Y-%m-%d-%H.%M.%S.bmp", tstruct);
                         //    sshot = SDL_CreateRGBSurface(0, 32, 32, 32, 0, 0, 0, 0);
                           //  SDL_FillRect(sshot, NULL, SDL_MapRGB(sshot->format, 0, 0, 255));
                             sshot = SDL_CreateRGBSurfaceFrom(g_screen_surface->pixels, g_screen_surface->w,
                                                              g_screen_surface->h, fmt->BitsPerPixel,
                                                              g_screen_surface->pitch, 0,0,0,0);
-                            if (SDL_SaveBMP(sshot, "out/screenshot.bmp") == 0) {
-                                printf("Saved screenshot to out/screenshot.bmp.\n");
+                            if (SDL_SaveBMP(sshot, fname) == 0) {
+                                printf("Saved screenshot to %s.\n", fname);
                             } else {
                                 printf("Failed to save screenshot: %s\n", SDL_GetError());
                             }
